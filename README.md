@@ -1,6 +1,7 @@
-[![Build Status](https://travis-ci.org/TheoConfidor/LiteJavaJson.svg?branch=master)](https://travis-ci.org/TheoConfidor/LiteJavaJson)
-
 # LiteJavaJson
+
+[![Build Status](https://travis-ci.org/TheoConfidor/LiteJavaJson.svg?branch=master)](https://travis-ci.org/TheoConfidor/LiteJavaJson)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
 The purpose of this project is to provide a very simple, no-fluff, single source file Java JSON serializer and JSON deserializer.
 
