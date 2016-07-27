@@ -1,18 +1,18 @@
 # LiteJavaJson
 
-The purpose of this project is to provide a very simple, no-fluff,  
-single source file Java JSON serializer and JSON deserializer.
+The purpose of this project is to provide a very simple, no-fluff, single source file Java JSON serializer and JSON deserializer.
 
 This project is designed to offer maximum value with minimal setup/configuration/learning. 
 
 ## Usage
 
-### Add to Project
+#### Add to Project
 
 This library contains two files: JsonSerializer.java and JsonDeserializer.java  
+
 Copy-paste either or both directly into your project.
 
-### Serialization
+#### Serialization
 
 ```Java
 // Sample class
@@ -27,7 +27,7 @@ String jsonString = JsonSerializer.toJsonString(obj);
 // jsonString: { "Value": "Important Data Here" }
 ```
 
-### Deserialization
+#### Deserialization
 
 ```Java
 // Sample class
@@ -41,7 +41,7 @@ SimpleStringValueObject obj = JsonDeserializer.toObj(
 	    "{ \"Value\": \"Important Data Here\" }");
 ```
 
-### Deserialize Single Element Value (no Java object required)
+#### Deserialize Single Element Value (no Java object required)
 
 
 ```Java
@@ -57,4 +57,5 @@ Silas Reinagel
 
 ## License
 
-You may use this code in part or in full however you wish. No credit or attachments are required.
+You may use this code in part or in full however you wish.  
+No credit or attachments are required.
