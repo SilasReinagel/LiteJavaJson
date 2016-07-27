@@ -1,9 +1,8 @@
 package io.theo.json;
 
-import java.lang.reflect.Array;
-import java.lang.reflect.Field;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
+import sun.reflect.ReflectionFactory;
+
+import java.lang.reflect.*;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -22,7 +21,17 @@ public final class JsonDeserializer
         return setValuesFromJsonString(createNewInstance(type), jsonString);
     }
 
-    public static <T> T setValuesFromJsonString(final T obj, final String jsonString)
+    public static <T> T getElementValue(final Class<T> type, final String elementName, final String jsonString)
+    {
+        return (T) getObjectValue(type, getJsonElements(jsonString).get(elementName));
+    }
+
+    public static String getElementRawValue(final String elementName, final String jsonString)
+    {
+        return getJsonElements(jsonString).get(elementName);
+    }
+
+    private static <T> T setValuesFromJsonString(final T obj, final String jsonString)
     {
         if (!isJsonObject(jsonString))
             throw new RuntimeException("Invalid object string: " + obj);
@@ -32,16 +41,6 @@ public final class JsonDeserializer
             if (jsonElements.containsKey(field.getName()))
                 setFieldValue(obj, field, jsonElements.get(field.getName()));
         return obj;
-    }
-
-    public static <T> T getElementValue(final Class<T> type, final String elementName, final String jsonString)
-    {
-        return (T) getObjectValue(type, getJsonElements(jsonString).get(elementName));
-    }
-
-    public static String getElementRawValue(final String elementName, final String jsonString)
-    {
-        return getJsonElements(jsonString).get(elementName);
     }
 
     private static Map<String, String> getJsonElements(final String jsonString)
@@ -166,9 +165,12 @@ public final class JsonDeserializer
     {
         try
         {
-            return type.newInstance();
+            ReflectionFactory factory = ReflectionFactory.getReflectionFactory();
+            Constructor constructor = factory.newConstructorForSerialization(type, Object.class.getDeclaredConstructor());
+            return type.cast(constructor.newInstance());
+            //return type.newInstance();
         }
-        catch (InstantiationException | IllegalAccessException e)
+        catch (InstantiationException | NoSuchMethodException | InvocationTargetException | IllegalAccessException e)
         {
             throw new RuntimeException(e);
         }

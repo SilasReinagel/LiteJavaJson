@@ -1,13 +1,20 @@
 package io.theo.json;
 
 import io.theo.json.testObjects.*;
-import org.junit.*;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
 
 public class JsonDeserializerTests
 {
+    @Test
+    public void JsonDeserializer_JsonStringMissingCurlyBraces_ThrowsException()
+    {
+        ExceptionAssert.assertThrows(RuntimeException.class, () -> JsonDeserializer.toObj(SimpleIntegerValueObject.class, ""));
+    }
+
     @Test
     public void JsonDeserializer_GetElementValue_IsCorrect()
     {
@@ -27,24 +34,13 @@ public class JsonDeserializerTests
     }
 
     @Test
-    public void JsonDeserializer_ToObjWithoutDefaultConstructor_ThrowsException()
+    public void JsonDeserializer_ToObjWithImmutableConstructor_IsCorrect()
     {
-        ExceptionAssert.assertThrows(RuntimeException.class, () -> JsonDeserializer.toObj(SimpleNonDefaultConstructorObject.class, ""));
+        SimpleImmutableObject obj = JsonDeserializer.toObj(SimpleImmutableObject.class,
+                "{ \"Value\": \"FancyReflectionMagic\" }");
+
+        Assert.assertEquals("FancyReflectionMagic", obj.Value);
     }
-
-    @Test
-    public void JsonDeserializer_JsonStringMissingCurlyBraces_ThrowsException()
-    {
-        ExceptionAssert.assertThrows(RuntimeException.class, () -> JsonDeserializer.toObj(SimpleIntegerValueObject.class, ""));
-    }
-
-    @Test
-    public void JsonDeserializer_SetValuesOnImmutableObject_FieldValueCorrect()
-    {
-        SimpleImmutableObject obj = JsonDeserializer.setValuesFromJsonString(new SimpleImmutableObject("Original"),
-                "{ \"Value\": \"New\" }");
-
-        Assert.assertEquals("New", obj.Value);    }
 
     @Test
     public void JsonDeserializer_CaseSensitiveFields_NonMatchingFieldValueNotSet()
