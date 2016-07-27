@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="LiteJavaJson" default="runUnitTests" basedir=".">
+<project name="LiteJavaJson" default="test" basedir=".">
 
 	<property name="srcDir" value = "${basedir}/src"/>
 	<property name="testDir" value = "${basedir}/tests"/>
@@ -44,7 +44,7 @@
 		</javac>		
 	</target>
 
-	<target name="runUnitTests" depends="compileUnitTests">
+	<target name="test" depends="compileUnitTests">
         <junit printsummary="yes" fork="true" haltonfailure="yes">
             <classpath>
                 <pathelement location="${testOutDir}"/>
