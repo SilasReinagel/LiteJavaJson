@@ -1,6 +1,6 @@
 # LiteJavaJson
 
-The purpose of this project is to provide a very simple, no-fluff, 
+The purpose of this project is to provide a very simple, no-fluff,  
 single source file Java JSON serializer and JSON deserializer.
 
 This project is designed to offer maximum value with minimal setup/configuration/learning. 
@@ -9,7 +9,7 @@ This project is designed to offer maximum value with minimal setup/configuration
 
 ### Add to Project
 
-This library contains two files: JsonSerializer.java and JsonDeserializer.java
+This library contains two files: JsonSerializer.java and JsonDeserializer.java  
 Copy-paste either or both directly into your project.
 
 ### Serialization
