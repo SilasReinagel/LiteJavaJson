@@ -79,4 +79,36 @@ public class JsonSerializerTests
 
         Assert.assertEquals("{ \"Value1\": [ 4, 3, 2, 1 ], \"Value2\": [ 4 ] }", json);
     }
+
+    @Test
+    public void JsonSerializer_ToJsonGenericData_IsCorrect()
+    {
+        String json = JsonSerializer.toJsonString(new GenericKeyValueObject<>("Price", 995.95));
+
+        Assert.assertEquals("{ \"Key\": \"Price\", \"Value\": 995.95 }", json);
+    }
+
+    @Test
+    public void JsonSerializer_ToJsonGenericDataCustomClass_IsCorrect()
+    {
+        String json = JsonSerializer.toJsonString(new GenericKeyValueObject<>("obj", new SimpleStringValueObject("Content")));
+
+        Assert.assertEquals("{ \"Key\": \"obj\", \"Value\": { \"Value\": \"Content\" } }", json);
+    }
+
+    @Test
+    public void JsonSerializer_ToJsonPrivateFieldData_IsCorrect()
+    {
+        String json = JsonSerializer.toJsonString(new SimplePrivateFieldClass("America"));
+
+        Assert.assertEquals("{ \"value\": \"America\" }", json);
+    }
+
+    @Test
+    public void JsonSerializer_ToJsonStaticFieldData_NotIncluded()
+    {
+        String json = JsonSerializer.toJsonString(new SerializableObject("Pikachu"));
+
+        Assert.assertEquals("{ \"Value\": \"Pikachu\" }", json);
+    }
 }

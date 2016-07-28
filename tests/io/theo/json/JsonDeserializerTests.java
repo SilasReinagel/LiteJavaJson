@@ -52,6 +52,25 @@ public class JsonDeserializerTests
     }
 
     @Test
+    public void JsonDeserializer_PrivateField_IsCorrect()
+    {
+        SimplePrivateFieldClass obj = JsonDeserializer.toObj(SimplePrivateFieldClass.class,
+                "{ \"value\": \"SampleValue\" }");
+
+        Assert.assertEquals("SampleValue", obj.getValue());
+    }
+
+    @Test
+    public void JsonDeserializer_ParentClassField_IsCorrect()
+    {
+        ChildClass obj = JsonDeserializer.toObj(ChildClass.class,
+                "{ \"ChildValue\": \"Kiddo\", \"ParentValue\": \"Pater Familias\" }");
+
+        Assert.assertEquals("Kiddo", obj.ChildValue);
+        Assert.assertEquals("Pater Familias", obj.ParentValue);
+    }
+
+    @Test
     public void JsonDeserializer_DataBoolean_IsCorrect()
     {
         SimpleBooleanValueObject obj = JsonDeserializer.toObj(SimpleBooleanValueObject.class,
@@ -135,6 +154,16 @@ public class JsonDeserializerTests
                 "{ \"Value\": \"Value2\" }");
 
         Assert.assertEquals(SampleEnum.Value2, obj.Value);
+    }
+
+    @Test
+    public void JsonDeserializer_DataGeneric_IsCorrect()
+    {
+        GenericKeyValueObject obj = JsonDeserializer.toObj(GenericKeyValueObject.class,
+                "{ \"Key\": \"Sora's Keyblade\", \"Value\": \"Is Equipped\" }");
+
+        Assert.assertEquals("Sora's Keyblade", obj.Key);
+        Assert.assertEquals("Is Equipped", obj.Value);
     }
 
     @Test

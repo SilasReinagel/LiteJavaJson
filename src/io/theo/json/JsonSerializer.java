@@ -2,8 +2,9 @@ package io.theo.json;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.List;
+import java.lang.reflect.Modifier;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public final class JsonSerializer
 {
@@ -26,15 +27,28 @@ public final class JsonSerializer
     public static String toJsonString(final Object obj)
     {
         String values = "";
-        for (Field field : obj.getClass().getFields())
+        for (Field field : getFields(obj))
             values += ("\"" + field.getName() + "\": " + toJsonValue(getFieldValue(field, obj)) + ", ");
         return wrapCommaSeparatedValues('{', '}', values);
+    }
+
+    private static List<Field> getFields(Object obj)
+    {
+        Set<Field> fields = new LinkedHashSet<>();
+        Arrays.stream(obj.getClass().getFields())
+                .forEach(x -> fields.add(x));
+        Arrays.stream(obj.getClass().getDeclaredFields())
+            .filter(x -> Modifier.isPrivate(x.getModifiers()) && !Modifier.isStatic(x.getModifiers()))
+            .forEach(x -> fields.add(x));
+        return fields.stream().collect(Collectors.toList());
     }
 
     private static Object getFieldValue(final Field field, final Object obj)
     {
         try
         {
+            if (!field.isAccessible())
+                field.setAccessible(true);
             return field.get(obj);
         }
         catch (IllegalAccessException ex)

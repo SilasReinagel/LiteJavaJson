@@ -37,10 +37,21 @@ public final class JsonDeserializer
             throw new RuntimeException("Invalid object string: " + obj);
 
         Map<String, String> jsonElements = getJsonElements(jsonString);
-        for (Field field : obj.getClass().getFields())
+        for (Field field : getFields(obj))
             if (jsonElements.containsKey(field.getName()))
                 setFieldValue(obj, field, jsonElements.get(field.getName()));
         return obj;
+    }
+
+    private static List<Field> getFields(Object obj)
+    {
+        Set<Field> fields = new LinkedHashSet<>();
+        Arrays.stream(obj.getClass().getFields())
+                .forEach(x -> fields.add(x));
+        Arrays.stream(obj.getClass().getDeclaredFields())
+                .filter(x -> Modifier.isPrivate(x.getModifiers()) && !Modifier.isStatic(x.getModifiers()))
+                .forEach(x -> fields.add(x));
+        return fields.stream().collect(Collectors.toList());
     }
 
     private static Map<String, String> getJsonElements(final String jsonString)
@@ -140,6 +151,8 @@ public final class JsonDeserializer
             return getEnumValue(type, extractedValue);
         if (fieldType.equals("LocalDateTime"))
             return LocalDateTime.parse(extractedValue);
+        if (fieldType.equals("Object"))
+            return extractedValue;
 
         return null;
     }
