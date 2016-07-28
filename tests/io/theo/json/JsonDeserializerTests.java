@@ -10,6 +10,24 @@ import java.util.Arrays;
 public class JsonDeserializerTests
 {
     @Test
+    public void JsonDeserializer_Null_ThrowsException()
+    {
+        ExceptionAssert.assertThrows(RuntimeException.class, () -> JsonDeserializer.toObj(SimpleStringValueObject.class, null));
+    }
+
+    @Test
+    public void JsonDeserializer_NoElements_ThrowsException()
+    {
+        ExceptionAssert.assertThrows(RuntimeException.class, () -> JsonDeserializer.toObj(SimpleStringValueObject.class, "{ }"));
+    }
+
+    @Test
+    public void JsonDeserializer_NoElementsMatchObject_ThrowsException()
+    {
+        ExceptionAssert.assertThrows(RuntimeException.class, () -> JsonDeserializer.toObj(SimpleStringValueObject.class, "{ \"abc\": 123 }"));
+    }
+
+    @Test
     public void JsonDeserializer_JsonStringMissingCurlyBraces_ThrowsException()
     {
         ExceptionAssert.assertThrows(RuntimeException.class, () -> JsonDeserializer.toObj(SimpleIntegerValueObject.class, ""));
@@ -45,10 +63,11 @@ public class JsonDeserializerTests
     @Test
     public void JsonDeserializer_CaseSensitiveFields_NonMatchingFieldValueNotSet()
     {
-        SimpleStringValueObject obj = JsonDeserializer.toObj(SimpleStringValueObject.class,
-                "{ \"value\": \"SampleValue\" }");
+        GenericKeyValueObject obj = JsonDeserializer.toObj(GenericKeyValueObject.class,
+                "{ \"Key\": \"Gunblade\", \"ExtraValue\": 12345 }");
 
-        Assert.assertNotEquals("SampleValue", obj.Value);
+        Assert.assertEquals("Gunblade", obj.Key);
+        Assert.assertEquals(null, obj.Value);
     }
 
     @Test

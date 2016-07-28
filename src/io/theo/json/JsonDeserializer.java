@@ -33,14 +33,26 @@ public final class JsonDeserializer
 
     private static <T> T setValuesFromJsonString(final T obj, final String jsonString)
     {
-        if (!isJsonObject(jsonString))
-            throw new RuntimeException("Invalid object string: " + obj);
-
         Map<String, String> jsonElements = getJsonElements(jsonString);
-        for (Field field : getFields(obj))
-            if (jsonElements.containsKey(field.getName()))
-                setFieldValue(obj, field, jsonElements.get(field.getName()));
+        if (jsonElements.size() == 0)
+            throw new RuntimeException("Json string contains no elements.");
+
+        List<Field> fieldsToMap = getFields(obj).stream()
+                .filter(x -> jsonElements.containsKey(x.getName()))
+                .collect(Collectors.toList());
+        if (fieldsToMap.size() == 0)
+            throw new RuntimeException("No Json string elements match object type: " + obj.getClass());
+
+        fieldsToMap.forEach(x -> setFieldValue(obj, x, jsonElements.get(x.getName())));
         return obj;
+    }
+
+    private static void validateJsonString(final String jsonString)
+    {
+        if (jsonString == null)
+            throw new RuntimeException("Invalid Json string: null");
+        if (!isJsonObject(jsonString))
+            throw new RuntimeException("Invalid Json string: " + jsonString);
     }
 
     private static List<Field> getFields(Object obj)
@@ -56,6 +68,7 @@ public final class JsonDeserializer
 
     private static Map<String, String> getJsonElements(final String jsonString)
     {
+        validateJsonString(jsonString);
         return getElementStrings(unwrap(jsonString)).stream().collect(Collectors.toMap(x -> getElementKey(x), x -> getElementValue(x)));
     }
 
@@ -188,7 +201,6 @@ public final class JsonDeserializer
             ReflectionFactory factory = ReflectionFactory.getReflectionFactory();
             Constructor constructor = factory.newConstructorForSerialization(type, Object.class.getDeclaredConstructor());
             return type.cast(constructor.newInstance());
-            //return type.newInstance();
         }
         catch (InstantiationException | NoSuchMethodException | InvocationTargetException | IllegalAccessException e)
         {
