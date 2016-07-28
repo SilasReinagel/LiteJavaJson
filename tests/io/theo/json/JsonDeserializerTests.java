@@ -119,6 +119,25 @@ public class JsonDeserializerTests
     }
 
     @Test
+    public void JsonDeserializer_DataInnerJavaObject_SubObjectValuesCorrect()
+    {
+        SimpleSubObjectValueObject obj = JsonDeserializer.toObj(SimpleSubObjectValueObject.class,
+                "{ \"Value\": { \"Value1\": 1, \"Value2\": 3 } }");
+
+        Assert.assertEquals(1, obj.Value.Value1);
+        Assert.assertEquals(3, (int)obj.Value.Value2);
+    }
+
+    @Test
+    public void JsonDeserializer_DataEnum_IsCorrect()
+    {
+        SimpleEnumValueObject obj = JsonDeserializer.toObj(SimpleEnumValueObject.class,
+                "{ \"Value\": \"Value2\" }");
+
+        Assert.assertEquals(SampleEnum.Value2, obj.Value);
+    }
+
+    @Test
     // This is an enhancement on the Json spec. It allows for more flexible output objects.
     public void JsonDeserializer_StringWrappedNumbers_DeserializedIntoNumericFields()
     {
@@ -129,16 +148,6 @@ public class JsonDeserializerTests
         Assert.assertEquals(412345678, obj.longValue);
         Assert.assertEquals(20.16, obj.floatValue, 0.01);
         Assert.assertEquals(12.23, obj.dblValue, 0.01);
-    }
-
-    @Test
-    public void JsonDeserializer_DataInnerJavaObject_SubObjectValuesCorrect()
-    {
-        SimpleSubObjectValueObject obj = JsonDeserializer.toObj(SimpleSubObjectValueObject.class,
-                "{ \"Value\": { \"Value1\": 1, \"Value2\": 3 } }");
-
-        Assert.assertEquals(1, obj.Value.Value1);
-        Assert.assertEquals(3, (int)obj.Value.Value2);
     }
 
     @Test

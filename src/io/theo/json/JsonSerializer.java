@@ -54,6 +54,8 @@ public final class JsonSerializer
             return getListAsJsonArray(obj);
         if (obj.getClass().isArray())
             return toJsonArray(obj);
+        if (obj.getClass().isEnum())
+            return "\"" + obj.toString() + "\"";
         if (isCustomObjectType(objType))
             return toJsonString(obj);
         if (isNumericType(objType) || isBooleanType(objType))

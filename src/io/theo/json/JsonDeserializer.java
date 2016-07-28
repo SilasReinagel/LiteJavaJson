@@ -136,10 +136,17 @@ public final class JsonDeserializer
             return Float.parseFloat(extractedValue);
         if (fieldType.equals("double") || fieldType.equals("Double"))
             return Double.parseDouble(extractedValue);
+        if (type.isEnum())
+            return getEnumValue(type, extractedValue);
         if (fieldType.equals("LocalDateTime"))
             return LocalDateTime.parse(extractedValue);
 
         return null;
+    }
+
+    private static Object getEnumValue(final Class type, final String stringValue)
+    {
+        return Enum.valueOf(type, stringValue);
     }
 
     private static String getJsonStringValue(final String input)

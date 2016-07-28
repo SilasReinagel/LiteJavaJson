@@ -41,6 +41,14 @@ public class JsonSerializerTests
     }
 
     @Test
+    public void JsonSerializer_ToJsonEnumData_IsCorrect()
+    {
+        String json = JsonSerializer.toJsonString(new SimpleEnumValueObject(SampleEnum.Value2));
+
+        Assert.assertEquals("{ \"Value\": \"Value2\" }", json);
+    }
+
+    @Test
     public void JsonSerializer_ToJsonNestedObject_IsCorrect()
     {
         String json = JsonSerializer.toJsonString(new SimpleSubObjectValueObject(new SimpleIntegerValueObject(1, 3)));
