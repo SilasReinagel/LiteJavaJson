@@ -17,6 +17,15 @@ public class JsonSerializerTests
     }
 
     @Test
+    public void JsonSerializer_ToJsonWithInputJson_Unchanged()
+    {
+        String srcJson = "{ \"Value1\": true }";
+        String json = JsonSerializer.toJsonString(srcJson);
+
+        Assert.assertEquals(srcJson, json);
+    }
+
+    @Test
     public void JsonSerializer_ToJsonBoolean_IsCorrect()
     {
         String json = JsonSerializer.toJsonString(new SimpleBooleanValueObject(true, false));

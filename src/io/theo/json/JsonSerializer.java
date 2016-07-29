@@ -26,10 +26,20 @@ public final class JsonSerializer
 
     public static String toJsonString(final Object obj)
     {
+        if (isJsonString(obj))
+            return (String)obj;
         String values = "";
         for (Field field : getFields(obj))
             values += ("\"" + field.getName() + "\": " + toJsonValue(getFieldValue(field, obj)) + ", ");
         return wrapCommaSeparatedValues('{', '}', values);
+    }
+
+    private static boolean isJsonString(final Object obj)
+    {
+        if (!(obj instanceof String))
+            return false;
+        String str = ((String)obj).trim();
+        return str.startsWith("{") && str.endsWith("}");
     }
 
     private static List<Field> getFields(Object obj)
