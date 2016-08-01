@@ -26,12 +26,7 @@ public final class JsonSerializer
 
     public static String toJsonString(final Object obj)
     {
-        if (isJsonString(obj))
-            return (String)obj;
-        String values = "";
-        for (Field field : getFields(obj))
-            values += ("\"" + field.getName() + "\": " + toJsonValue(getFieldValue(field, obj)) + ", ");
-        return wrapCommaSeparatedValues('{', '}', values);
+        return toJsonValue(obj);
     }
 
     private static boolean isJsonString(final Object obj)
@@ -42,7 +37,7 @@ public final class JsonSerializer
         return str.startsWith("{") && str.endsWith("}");
     }
 
-    private static List<Field> getFields(Object obj)
+    private static List<Field> getFields(final Object obj)
     {
         Set<Field> fields = new LinkedHashSet<>();
         Arrays.stream(obj.getClass().getFields())
@@ -71,6 +66,8 @@ public final class JsonSerializer
     {
         if (obj == null)
             return "null";
+        if (isJsonString(obj))
+            return (String)obj;
 
         String objType = obj.getClass().getSimpleName();
 
@@ -81,7 +78,7 @@ public final class JsonSerializer
         if (obj.getClass().isEnum())
             return "\"" + obj.toString() + "\"";
         if (isCustomObjectType(objType))
-            return toJsonString(obj);
+            return toJsonObject(obj);
         if (isNumericType(objType) || isBooleanType(objType))
             return obj.toString();
         return "\"" + obj.toString() + "\"";
@@ -100,6 +97,14 @@ public final class JsonSerializer
     private static boolean isCustomObjectType(String fieldType)
     {
         return !(_numericTypes.contains(fieldType) || _nonNumericTypes.contains(fieldType));
+    }
+
+    private static String toJsonObject(final Object obj)
+    {
+        String values = "";
+        for (Field field : getFields(obj))
+            values += ("\"" + field.getName() + "\": " + toJsonValue(getFieldValue(field, obj)) + ", ");
+        return wrapCommaSeparatedValues('{', '}', values);
     }
 
     private static String toJsonArray(final Object array)

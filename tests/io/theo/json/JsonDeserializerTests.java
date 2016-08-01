@@ -6,31 +6,26 @@ import org.junit.Test;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.List;
 
 public class JsonDeserializerTests
 {
     @Test
-    public void JsonDeserializer_Null_ThrowsException()
+    public void JsonDeserializer_InputNull_ThrowsException()
     {
         ExceptionAssert.assertThrows(RuntimeException.class, () -> JsonDeserializer.toObj(SimpleStringValueObject.class, null));
     }
 
     @Test
-    public void JsonDeserializer_NoElements_ThrowsException()
+    public void JsonDeserializer_InputContainsNoElements_ThrowsException()
     {
         ExceptionAssert.assertThrows(RuntimeException.class, () -> JsonDeserializer.toObj(SimpleStringValueObject.class, "{ }"));
     }
 
     @Test
-    public void JsonDeserializer_NoElementsMatchObject_ThrowsException()
+    public void JsonDeserializer_InputContainsNoElementsMatchingObject_ThrowsException()
     {
         ExceptionAssert.assertThrows(RuntimeException.class, () -> JsonDeserializer.toObj(SimpleStringValueObject.class, "{ \"abc\": 123 }"));
-    }
-
-    @Test
-    public void JsonDeserializer_JsonStringMissingCurlyBraces_ThrowsException()
-    {
-        ExceptionAssert.assertThrows(RuntimeException.class, () -> JsonDeserializer.toObj(SimpleIntegerValueObject.class, ""));
     }
 
     @Test
@@ -52,7 +47,7 @@ public class JsonDeserializerTests
     }
 
     @Test
-    public void JsonDeserializer_ToObjWithImmutableConstructor_IsCorrect()
+    public void JsonDeserializer_MappingToObjWithImmutableConstructor_IsCorrect()
     {
         SimpleImmutableObject obj = JsonDeserializer.toObj(SimpleImmutableObject.class,
                 "{ \"Value\": \"FancyReflectionMagic\" }");
@@ -61,7 +56,7 @@ public class JsonDeserializerTests
     }
 
     @Test
-    public void JsonDeserializer_CaseSensitiveFields_NonMatchingFieldValueNotSet()
+    public void JsonDeserializer_MappingCaseSensitiveFields_NonMatchingFieldValueNotSet()
     {
         GenericKeyValueObject obj = JsonDeserializer.toObj(GenericKeyValueObject.class,
                 "{ \"Key\": \"Gunblade\", \"ExtraValue\": 12345 }");
@@ -71,7 +66,7 @@ public class JsonDeserializerTests
     }
 
     @Test
-    public void JsonDeserializer_PrivateField_IsCorrect()
+    public void JsonDeserializer_MappingPrivateField_IsCorrect()
     {
         SimplePrivateFieldClass obj = JsonDeserializer.toObj(SimplePrivateFieldClass.class,
                 "{ \"value\": \"SampleValue\" }");
@@ -80,13 +75,60 @@ public class JsonDeserializerTests
     }
 
     @Test
-    public void JsonDeserializer_ParentClassField_IsCorrect()
+    public void JsonDeserializer_MappingParentClassField_IsCorrect()
     {
         ChildClass obj = JsonDeserializer.toObj(ChildClass.class,
                 "{ \"ChildValue\": \"Kiddo\", \"ParentValue\": \"Pater Familias\" }");
 
         Assert.assertEquals("Kiddo", obj.ChildValue);
         Assert.assertEquals("Pater Familias", obj.ParentValue);
+    }
+
+    @Test
+    public void JsonDeserializer_SingleValueBoolean_IsCorrect()
+    {
+        boolean obj = JsonDeserializer.toObj(Boolean.class,
+                "true");
+
+        Assert.assertEquals(true, obj);
+    }
+
+    @Test
+    public void JsonDeserializer_SingleValueDouble_IsCorrect()
+    {
+        double obj = JsonDeserializer.toObj(Double.class,
+                "78.87");
+
+        Assert.assertEquals(78.87, obj, 0.01);
+    }
+
+    @Test
+    public void JsonDeserializer_SingleValueString_IsCorrect()
+    {
+        String obj = JsonDeserializer.toObj(String.class,
+                "\"John Doe\"");
+
+        Assert.assertEquals("John Doe", obj);
+    }
+
+    @Test
+    public void JsonDeserializer_SingleValueArrayToJavaArray_IsCorrect()
+    {
+        int[] obj = JsonDeserializer.toObj(int[].class,
+                "[ 9, 8, 7, 6, 5 ]");
+
+        Assert.assertArrayEquals(new int[]{9, 8, 7, 6, 5}, obj);
+    }
+
+    @Test
+    public void JsonDeserializer_ToListOfStrings_IsCorrect()
+    {
+        List<String> obj = JsonDeserializer.toList(String.class,
+            "[ \"Stratovarius\", \"Blind Guardian\" ]");
+
+        Assert.assertEquals(2, obj.size());
+        Assert.assertTrue(obj.contains("Stratovarius"));
+        Assert.assertTrue(obj.contains("Blind Guardian"));
     }
 
     @Test
@@ -199,7 +241,7 @@ public class JsonDeserializerTests
     }
 
     @Test
-    public void JsonDeserializer_EmptyList_IsCorrect()
+    public void JsonDeserializer_DataEmptyList_IsCorrect()
     {
         SimpleStringListValueObject obj = JsonDeserializer.toObj(SimpleStringListValueObject.class,
                 "{ \"Value\": [] }");
@@ -208,7 +250,7 @@ public class JsonDeserializerTests
     }
 
     @Test
-    public void JsonDeserializer_ListOfStrings_IsCorrect()
+    public void JsonDeserializer_DataListOfStrings_IsCorrect()
     {
         SimpleStringListValueObject obj = JsonDeserializer.toObj(SimpleStringListValueObject.class,
                 "{ \"Value\": [ \"JC Denton\", \"Adam Jensen\" ] }");
@@ -219,7 +261,7 @@ public class JsonDeserializerTests
     }
 
     @Test
-    public void JsonDeserializer_NestedListOfIntegers_IsCorrect()
+    public void JsonDeserializer_DataNestedListOfIntegers_IsCorrect()
     {
         NestedListObject obj = JsonDeserializer.toObj(NestedListObject.class,
                 "{ \"Value\": [ [ [ [ 9, 8, 7 ] ] ] ] }");

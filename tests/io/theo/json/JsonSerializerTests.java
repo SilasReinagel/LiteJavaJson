@@ -26,7 +26,47 @@ public class JsonSerializerTests
     }
 
     @Test
-    public void JsonSerializer_ToJsonBoolean_IsCorrect()
+    public void JsonSerializer_ToJsonSingleValueBoolean_IsCorrect()
+    {
+        String json = JsonSerializer.toJsonString(true);
+
+        Assert.assertEquals("true", json);
+    }
+
+    @Test
+    public void JsonSerializer_ToJsonSingleValueNumeric_IsCorrect()
+    {
+        String json = JsonSerializer.toJsonString(1.2345);
+
+        Assert.assertEquals("1.2345", json);
+    }
+
+    @Test
+    public void JsonSerializer_ToJsonSingleValueString_IsCorrect()
+    {
+        String json = JsonSerializer.toJsonString("John Doe");
+
+        Assert.assertEquals("\"John Doe\"", json);
+    }
+
+    @Test
+    public void JsonSerializer_ToJsonArrayFromJavaArray_IsCorrect()
+    {
+        String json = JsonSerializer.toJsonString(new int[]{1, 2, 3, 4, 5});
+
+        Assert.assertEquals("[ 1, 2, 3, 4, 5 ]", json);
+    }
+
+    @Test
+    public void JsonSerialzier_ToJsonArrayFromList_IsCorrect()
+    {
+        String json = JsonSerializer.toJsonString(Arrays.asList("Superman", "Spiderman", "Batman"));
+
+        Assert.assertEquals("[ \"Superman\", \"Spiderman\", \"Batman\" ]", json);
+    }
+
+    @Test
+    public void JsonSerializer_ToJsonBooleanData_IsCorrect()
     {
         String json = JsonSerializer.toJsonString(new SimpleBooleanValueObject(true, false));
 
@@ -34,7 +74,7 @@ public class JsonSerializerTests
     }
 
     @Test
-    public void JsonSerializer_ToJsonNumeric_IsCorrect()
+    public void JsonSerializer_ToJsonNumericData_IsCorrect()
     {
         String json = JsonSerializer.toJsonString(new NumericTypesObject(1, 2, 3.1f, 4.5));
 
@@ -66,7 +106,7 @@ public class JsonSerializerTests
     }
 
     @Test
-    public void JsonSerializer_ToJsonArrayFromList_IsCorrect()
+    public void JsonSerializer_ToJsonArrayFromInnerList_IsCorrect()
     {
         String json = JsonSerializer.toJsonString(new SimpleStringListValueObject(Arrays.asList("JC Denton", "Adam Jensen")));
 
@@ -74,7 +114,7 @@ public class JsonSerializerTests
     }
 
     @Test
-    public void JsonSerializer_ToJsonArrayFromEmptyList_IsCorrect()
+    public void JsonSerializer_ToJsonArrayFromInnerEmptyList_IsCorrect()
     {
         String json = JsonSerializer.toJsonString(new SimpleStringListValueObject(new ArrayList<>()));
 
@@ -82,7 +122,7 @@ public class JsonSerializerTests
     }
 
     @Test
-    public void JsonSerializer_ToJsonArrayFromIntArray_IsCorrect()
+    public void JsonSerializer_ToJsonArrayFromInnerIntArray_IsCorrect()
     {
         String json = JsonSerializer.toJsonString(new IntegerArrayValueObject(new int[] { 4, 3, 2, 1 }, new Integer[] { 4 }));
 
@@ -119,5 +159,16 @@ public class JsonSerializerTests
         String json = JsonSerializer.toJsonString(new SerializableObject("Pikachu"));
 
         Assert.assertEquals("{ \"Value\": \"Pikachu\" }", json);
+    }
+
+    @Test
+    public void JsonSerializer_PerformanceTest_BetterThanTenThousandsOpsPerSecond()
+    {
+        SimpleStringListValueObject obj = new SimpleStringListValueObject(Arrays.asList("JC Denton", "Adam Jensen", "Paul Denton", "David Sarif"));
+
+        double opsPerSecond = PerformanceTester.getOpsPerSecond(2000, 500, () -> JsonSerializer.toJsonString(obj));
+
+        System.out.println("Serialization: " + (long)opsPerSecond + " ops/s");
+        Assert.assertTrue(opsPerSecond > 10000);
     }
 }

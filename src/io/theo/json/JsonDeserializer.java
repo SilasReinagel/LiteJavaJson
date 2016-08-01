@@ -16,11 +16,19 @@ public final class JsonDeserializer
         return isWrappedWith("{", "}", input);
     }
 
+    @SuppressWarnings("unchecked")
     public static <T> T toObj(final Class<T> type, final String jsonString)
     {
-        return setValuesFromJsonString(createNewInstance(type), jsonString);
+        return (T) getObjectValue(type, jsonString);
     }
 
+    @SuppressWarnings("unchecked")
+    public static <T> List<T> toList(final Class<T> itemType, final String jsonString)
+    {
+        return toObjectList(itemType, jsonString);
+    }
+
+    @SuppressWarnings("unchecked")
     public static <T> T getElementValue(final Class<T> type, final String elementName, final String jsonString)
     {
         return (T) getObjectValue(type, getJsonElements(jsonString).get(elementName));
@@ -29,6 +37,11 @@ public final class JsonDeserializer
     public static String getElementRawValue(final String elementName, final String jsonString)
     {
         return getJsonElements(jsonString).get(elementName);
+    }
+
+    private static <T> T getJsonObj(final Class<T> type, final String jsonString)
+    {
+        return setValuesFromJsonString(createNewInstance(type), jsonString);
     }
 
     private static <T> T setValuesFromJsonString(final T obj, final String jsonString)
@@ -99,9 +112,9 @@ public final class JsonDeserializer
                 currentValue += ch;
             if (!foundKey && ch == ':')
                 foundKey = true;
-            if (foundKey && isSubObjectOpener(ch))
+            if (foundKey && isObjectOpener(ch))
                 currentDepth++;
-            if (currentDepth != 0 && isSubObjectCloser(ch))
+            if (currentDepth != 0 && isObjectCloser(ch))
                 currentDepth--;
             if (foundKey && currentDepth == 0 && isTerminator(ch))
             {
@@ -111,41 +124,43 @@ public final class JsonDeserializer
             }
         }
 
-        if (currentValue.length() > 0)
+        if (currentValue.trim().length() > 0)
             values.add(currentValue);
         return values;
     }
 
-    private static boolean isSubObjectOpener(final char ch)
+    private static boolean isObjectOpener(final char ch)
     {
         return ch == '{' || ch == '[';
     }
 
-    private static boolean isSubObjectCloser(final char ch)
+    private static boolean isObjectCloser(final char ch)
     {
         return ch == '}' || ch == ']';
     }
 
     private static boolean isTerminator(final char ch)
     {
-        return ch == ',' || isSubObjectCloser(ch);
+        return ch == ',' || isObjectCloser(ch);
     }
 
-    // Field is required because of Generic Type Erasure
+    // Field is required for Lists because of Generic Type Erasure
     private static Object getObjectValue(final Field field, final String stringValue)
     {
-        if (isJsonArray(stringValue))
-            return toCollection(field, stringValue);
+        if (isJsonArray(stringValue) && field.getType().getSimpleName().equals("List"))
+            return toObjectList((ParameterizedType)field.getGenericType(), stringValue);
         return getObjectValue(field.getType(), stringValue);
     }
 
     private static Object getObjectValue(final Class type, final String stringValue)
     {
         String fieldType = type.getSimpleName();
+        if (isJsonArray(stringValue) && type.isArray())
+            return toArray(type, stringValue);
         if (fieldType.equals("String"))
             return getJsonStringValue(stringValue);
         if (isJsonObject(stringValue))
-            return toObj(type.getCanonicalName(), stringValue);
+            return getJsonObj(type.getCanonicalName(), stringValue);
 
         String extractedValue = stringValue.replace("\"", "");
         if (fieldType.equals("byte") || fieldType.equals("Byte"))
@@ -185,14 +200,14 @@ public final class JsonDeserializer
         return isWrappedWith("\"", "\"", input);
     }
 
-    private static Object toCollection(final Field field, final String jsonArray)
+/*    private static Object toCollection(final Field field, final String jsonArray)
     {
         if (field.getType().getSimpleName().equals("List"))
-            return toList((ParameterizedType)field.getGenericType(), jsonArray);
+            return toObjectList((ParameterizedType)field.getGenericType(), jsonArray);
         if (field.getType().isArray())
             return toArray(field.getType(), jsonArray);
         return null;
-    }
+    }*/
 
     private static <T> T createNewInstance(final Class<T> type)
     {
@@ -208,11 +223,11 @@ public final class JsonDeserializer
         }
     }
 
-    private static <T> T toObj(final String fullyQualifiedTypeName, final String jsonString)
+    private static <T> T getJsonObj(final String fullyQualifiedTypeName, final String jsonString)
     {
         try
         {
-            return (T) toObj(Class.forName(fullyQualifiedTypeName), jsonString);
+            return (T) getJsonObj(Class.forName(fullyQualifiedTypeName), jsonString);
         }
         catch (ClassNotFoundException e)
         {
@@ -272,27 +287,27 @@ public final class JsonDeserializer
         return type.isArray() ? type.getComponentType() : type;
     }
 
-    private static List toList(final ParameterizedType type, final String jsonArray)
+    private static List toObjectList(final ParameterizedType type, final String jsonArray)
     {
         Type innerType = type.getActualTypeArguments()[0];
         if (innerType instanceof ParameterizedType)
-            return Collections.singletonList(toList((ParameterizedType)innerType, unwrap(jsonArray)));
+            return Collections.singletonList(toObjectList((ParameterizedType)innerType, unwrap(jsonArray)));
         if (innerType instanceof Class)
-            return toList((Class)innerType, jsonArray);
+            return toObjectList((Class)innerType, jsonArray);
         return new ArrayList<>();
     }
 
-    private static List toList(final Class type, final String jsonArray)
+    private static <T> List<T> toObjectList(final Class<T> itemType, final String jsonArray)
     {
         return Arrays.stream(unwrap(jsonArray).split("\\s*,\\s*"))
                 .filter(x -> x.trim().length() > 0)
-                .map(x -> getObjectValue(getArrayItemType(type), x.trim()))
+                .map(x -> (T)getObjectValue(getArrayItemType(itemType), x.trim()))
                 .collect(Collectors.toList());
     }
 
     private static Object toArray(final Class type, final String jsonArray)
     {
-        List values = toList(type, jsonArray);
+        List values = toObjectList(type, jsonArray);
 
         final Class itemType = getArrayItemType(type);
         int count = values.size();
