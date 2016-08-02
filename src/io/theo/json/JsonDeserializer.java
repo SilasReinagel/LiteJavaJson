@@ -155,12 +155,12 @@ public final class JsonDeserializer
     private static Object getObjectValue(final Class type, final String stringValue)
     {
         String fieldType = type.getSimpleName();
+        if (isJsonObject(stringValue))
+            return getJsonObj(type.getCanonicalName(), stringValue);
         if (isJsonArray(stringValue) && type.isArray())
             return toArray(type, stringValue);
         if (fieldType.equals("String"))
             return getJsonStringValue(stringValue);
-        if (isJsonObject(stringValue))
-            return getJsonObj(type.getCanonicalName(), stringValue);
 
         String extractedValue = stringValue.replace("\"", "");
         if (fieldType.equals("byte") || fieldType.equals("Byte"))
@@ -199,15 +199,6 @@ public final class JsonDeserializer
     {
         return isWrappedWith("\"", "\"", input);
     }
-
-/*    private static Object toCollection(final Field field, final String jsonArray)
-    {
-        if (field.getType().getSimpleName().equals("List"))
-            return toObjectList((ParameterizedType)field.getGenericType(), jsonArray);
-        if (field.getType().isArray())
-            return toArray(field.getType(), jsonArray);
-        return null;
-    }*/
 
     private static <T> T createNewInstance(final Class<T> type)
     {
@@ -299,10 +290,42 @@ public final class JsonDeserializer
 
     private static <T> List<T> toObjectList(final Class<T> itemType, final String jsonArray)
     {
-        return Arrays.stream(unwrap(jsonArray).split("\\s*,\\s*"))
-                .filter(x -> x.trim().length() > 0)
+        return getStringValuesFromJsonArray(jsonArray).stream()
                 .map(x -> (T)getObjectValue(getArrayItemType(itemType), x.trim()))
                 .collect(Collectors.toList());
+    }
+
+    private static List<String> getStringValuesFromJsonArray(final String jsonArray)
+    {
+        List<String> valueStrings = new ArrayList<>();
+
+        int startIndex = -1;
+        int endIndex = -1;
+        int objectDepth = 0;
+        for (int i = 0; i < jsonArray.length(); i++)
+        {
+            char ch = jsonArray.charAt(i);
+            if (Character.isWhitespace(ch))
+                continue;
+            if (isObjectCloser(ch))
+                objectDepth--;
+            if (startIndex == -1 && objectDepth > 0)
+                startIndex = i;
+            if (startIndex != -1 && objectDepth > 0)
+                endIndex = i + 1;
+            if (isObjectOpener(ch))
+                objectDepth++;
+            if (objectDepth == 1 && ch == ',')
+                endIndex = endIndex - 1;
+            if (objectDepth == 0 || objectDepth == 1 && ch == ',')
+            {
+                if (startIndex > 0 && endIndex > startIndex)
+                    valueStrings.add(jsonArray.substring(startIndex, endIndex));
+                startIndex = -1;
+            }
+        }
+
+        return valueStrings;
     }
 
     private static Object toArray(final Class type, final String jsonArray)

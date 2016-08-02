@@ -271,6 +271,18 @@ public class JsonDeserializerTests
     }
 
     @Test
+    public void JsonDeserializer_DataListOfCustomObject_IsCorrect()
+    {
+        CustomObjListValueObject obj = JsonDeserializer.toObj(CustomObjListValueObject.class,
+                "{ \"Value\": [ " +
+                        "{ \"intValue\": \"79\", \"longValue\": \"412345678\", \"floatValue\": \"20.16\", \"dblValue\": \"12.23\" }, " +
+                        "{ \"intValue\": \"123\", \"longValue\": \"412345678\", \"floatValue\": \"20.18\", \"dblValue\": \"7.23\" } ] }");
+
+        Assert.assertEquals(2, obj.Value.size());
+        obj.Value.forEach(x -> Assert.assertNotNull(x));
+    }
+
+    @Test
     public void JsonDeserializer_ArrayEmpty_IsCorrect()
     {
         SimpleStringArrayValueObject obj = JsonDeserializer.toObj(SimpleStringArrayValueObject.class,

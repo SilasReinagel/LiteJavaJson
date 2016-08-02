@@ -58,7 +58,7 @@ public class JsonSerializerTests
     }
 
     @Test
-    public void JsonSerialzier_ToJsonArrayFromList_IsCorrect()
+    public void JsonSerializer_ToJsonArrayFromList_IsCorrect()
     {
         String json = JsonSerializer.toJsonString(Arrays.asList("Superman", "Spiderman", "Batman"));
 
