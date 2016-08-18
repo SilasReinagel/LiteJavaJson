@@ -332,6 +332,15 @@ public class JsonDeserializerTests
     }
 
     @Test
+    public void JsonDeserializer_ArrayBase64StringEncodedBytes_IsCorrect()
+    {
+        SimpleByteArrayValueObject obj = JsonDeserializer.toObj(SimpleByteArrayValueObject.class,
+                "{ \"Value\": \"AQID\" }");
+
+        Assert.assertArrayEquals(new byte[] { 1, 2, 3 }, obj.Value);
+    }
+
+    @Test
     public void JsonDeserializer_ArrayDouble_IsCorrect()
     {
         SimpleDoubleArrayValueObject obj = JsonDeserializer.toObj(SimpleDoubleArrayValueObject.class,

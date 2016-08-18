@@ -170,6 +170,8 @@ public final class JsonDeserializer
         String fieldType = type.getSimpleName();
         if (isJsonObject(stringValue))
             return getJsonObj(type.getCanonicalName(), stringValue);
+        if (byte[].class.isAssignableFrom(type) && isJsonString(stringValue))
+            return getBase64Bytes(stringValue);
         if (isJsonArray(stringValue) && type.isArray())
             return toArray(type, stringValue);
         if (fieldType.equals("String"))
@@ -196,6 +198,11 @@ public final class JsonDeserializer
             return extractedValue;
 
         return null;
+    }
+
+    private static Object getBase64Bytes(final String stringValue)
+    {
+        return Base64.getDecoder().decode(unwrap(stringValue));
     }
 
     private static Object getEnumValue(final Class type, final String stringValue)

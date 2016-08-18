@@ -4,24 +4,18 @@ import io.theo.json.testObjects.*;
 import org.junit.*;
 
 import java.util.*;
+import java.util.stream.IntStream;
 
 public class JsonSerializerTests
 {
+    private Random _rnd = new Random();
+
     @Test
     public void JsonSerializer_ToJsonNull_IsCorrect()
     {
         String json = JsonSerializer.toJsonString(new SimpleStringValueObject(null));
 
         Assert.assertEquals("{ \"Value\": null }", json);
-    }
-
-    @Test
-    public void JsonSerializer_ToJsonWithInputJson_Unchanged()
-    {
-        String srcJson = "{ \"Value1\": true }";
-        String json = JsonSerializer.toJsonString(srcJson);
-
-        Assert.assertEquals(srcJson, json);
     }
 
     @Test
@@ -46,6 +40,18 @@ public class JsonSerializerTests
         String json = JsonSerializer.toJsonString("John Doe");
 
         Assert.assertEquals("\"John Doe\"", json);
+    }
+
+    // Not part of the official JSON Spec. There is no specified way of handling byte arrays.
+    @Test
+    public void JsonSerializer_ToJsonSingleValueByteArray_EncodedAsBase64String()
+    {
+        byte[] bytes = new byte[]{1,2,3};
+
+        String json = JsonSerializer.toJsonString(bytes);
+
+        String expected = "\"" + Base64.getEncoder().encodeToString(bytes) + "\"";
+        Assert.assertEquals(expected, json);
     }
 
     @Test
@@ -169,14 +175,6 @@ public class JsonSerializerTests
     }
 
     @Test
-    public void JsonSerializer_ToJsonMapStringByteArrayData_IsCorrect()
-    {
-        String json = JsonSerializer.toJsonString(new StringByteArrayMapValueObject(Collections.singletonMap("Bytes", new byte[]{ 1, 2, 3 })));
-
-        Assert.assertEquals("{ \"Value\": [ { \"Bytes\": [ 1, 2, 3 ] } ] }", json);
-    }
-
-    @Test
     public void JsonSerializer_ToJsonMapDataMultipleEntries_IsCorrect()
     {
         Map<String, Integer> map = new HashMap<>();
@@ -194,7 +192,39 @@ public class JsonSerializerTests
 
         double opsPerSecond = PerformanceTester.getOpsPerSecond(2000, 500, () -> JsonSerializer.toJsonString(obj));
 
-        System.out.println("Serialization: " + (long)opsPerSecond + " ops/s");
+        System.out.println("Simple POJO: " + (long)opsPerSecond + " ops/s");
         Assert.assertTrue(opsPerSecond > 10000);
+    }
+
+    @Test
+    public void JsonSerializer_PerformanceTestLargeList_BetterThanTenThousandOpsPerSecond()
+    {
+        List<String> items = new ArrayList<>();
+        IntStream.range(0, 100).forEach(x -> items.add(UUID.randomUUID().toString()));
+
+        double opsPerSecond = PerformanceTester.getOpsPerSecond(2000, 500, () -> JsonSerializer.toJsonString(items));
+
+        System.out.println("100 Item List: " + (long)opsPerSecond + " ops/s");
+        Assert.assertTrue(opsPerSecond > 10000);
+    }
+
+    @Test
+    public void JsonSerializer_PerformanceTestLargeMapOfByteArray_BetterThanTenThousandOpsPerSecond()
+    {
+        Map<String, byte[]> items = new HashMap<>();
+        IntStream.range(0, 100).forEach(x -> items.put(Integer.toString(x), getRandomBytes(100)));
+
+        double opsPerSecond = PerformanceTester.getOpsPerSecond(2000, 500, () -> JsonSerializer.toJsonString(items));
+
+        System.out.println("100 Item Byte Array Map: " + (long)opsPerSecond + " ops/s");
+        Assert.assertTrue(opsPerSecond > 10000);
+    }
+
+    private byte[] getRandomBytes(int nBytes)
+    {
+        byte[] bytes = new byte[nBytes];
+        for (int i = 0; i < nBytes; i ++)
+            bytes[i] = (byte)_rnd.nextInt(128);
+        return bytes;
     }
 }

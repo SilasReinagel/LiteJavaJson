@@ -3,23 +3,36 @@ package io.theo.json;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 public final class JsonSerializer
 {
-    private static final List<String> _numericTypes = Arrays.asList(
-            "byte", "Byte",
-            "int", "Integer",
-            "long", "Long",
-            "float", "Float",
-            "double", "Double");
+    private static final BiConsumer<StringBuilder, Object> _writeLiteral = (sb, x) -> sb.append(x.toString());
+    private static final BiConsumer<StringBuilder, Object> _writeString = (sb, x) -> sb.append("\"").append(x.toString()).append("\"");
 
-    private static final List<String> _nonNumericTypes = Arrays.asList(
-            "boolean", "Boolean",
-            "String",
-            "LocalDateTime");
+    private static final Map<Class, BiConsumer<StringBuilder, Object>> _writers = new HashMap<Class, BiConsumer<StringBuilder, Object>>()
+    {{
+        put(byte.class, _writeLiteral);
+        put(Byte.class, _writeLiteral);
+        put(int.class, _writeLiteral);
+        put(Integer.class, _writeLiteral);
+        put(long.class, _writeLiteral);
+        put(Long.class, _writeLiteral);
+        put(float.class, _writeLiteral);
+        put(Float.class, _writeLiteral);
+        put(double.class, _writeLiteral);
+        put(Double.class, _writeLiteral);
+        put(boolean.class, _writeLiteral);
+        put(Boolean.class, _writeLiteral);
+        put(String.class, _writeString);
+        put(LocalDateTime.class, _writeString);
+        put(byte[].class, (sb, x) -> writeJsonValue(sb, Base64.getEncoder().encodeToString((byte[])x)));
+    }};
 
+    private static final Map<Class, List<Field>> _classFields = new HashMap<>();
 
     private JsonSerializer()
     {
@@ -27,26 +40,59 @@ public final class JsonSerializer
 
     public static String toJsonString(final Object obj)
     {
-        return toJsonValue(obj);
+        return writeJsonValue(new StringBuilder(), obj).toString();
     }
 
-    private static boolean isJsonString(final Object obj)
+    private static StringBuilder writeJsonValue(final StringBuilder sb, final Object obj)
     {
-        if (!(obj instanceof String))
-            return false;
-        String str = ((String)obj).trim();
-        return str.startsWith("{") && str.endsWith("}");
+        getWriter(obj).accept(sb, obj);
+        return sb;
+    }
+
+    private static BiConsumer<StringBuilder, Object> getWriter(final Object obj)
+    {
+        if (obj == null)
+            return (sb, x) -> sb.append("null");
+
+        Class objClass = obj.getClass();
+        if (!_writers.containsKey(objClass))
+            initWriter(obj);
+        return (sb, x) -> _writers.get(objClass).accept(sb, x);
+    }
+
+    private static void initWriter(final Object obj)
+    {
+        Class objClass = obj.getClass();
+        if (objClass.isEnum())
+            _writers.put(objClass, _writeString);
+        if (obj instanceof List<?>)
+            _writers.put(objClass, (sb, x) -> writeList(sb, x));
+        if (Map.class.isAssignableFrom(obj.getClass()))
+            _writers.put(objClass, (sb, x) -> writeMap(sb, x));
+        if (objClass.isArray())
+            _writers.put(objClass, (sb, x) -> writeArray(sb, x));
+        if (!_writers.containsKey(objClass))
+            _writers.put(objClass, (sb, x) -> writeJsonObj(sb, x));
     }
 
     private static List<Field> getFields(final Object obj)
+    {
+        Class objClass = obj.getClass();
+        if (!_classFields.containsKey(objClass))
+            cacheClassFields(obj);
+        return _classFields.get(objClass);
+    }
+
+    private static void cacheClassFields(final Object obj)
     {
         Set<Field> fields = new LinkedHashSet<>();
         Arrays.stream(obj.getClass().getFields())
                 .forEach(x -> fields.add(x));
         Arrays.stream(obj.getClass().getDeclaredFields())
-            .filter(x -> Modifier.isPrivate(x.getModifiers()) && !Modifier.isStatic(x.getModifiers()))
-            .forEach(x -> fields.add(x));
-        return fields.stream().collect(Collectors.toList());
+                .filter(x -> Modifier.isPrivate(x.getModifiers()) && !Modifier.isStatic(x.getModifiers()))
+                .forEach(x -> fields.add(x));
+        List<Field> fieldsList = fields.stream().collect(Collectors.toList());
+        _classFields.put(obj.getClass(), fieldsList);
     }
 
     private static Object getFieldValue(final Field field, final Object obj)
@@ -63,81 +109,51 @@ public final class JsonSerializer
         }
     }
 
-    private static String toJsonValue(final Object obj)
+    private static void writeJsonObj(final StringBuilder sb, final Object obj)
     {
-        if (obj == null)
-            return "null";
-        if (isJsonString(obj))
-            return (String)obj;
-
-        String objType = obj.getClass().getSimpleName();
-
-        if (obj instanceof String || obj.getClass().isEnum())
-            return "\"" + obj.toString() + "\"";
-        if (obj instanceof List<?>)
-            return getListAsJsonArray(obj);
-        if (obj.getClass().isArray())
-            return toJsonArray(obj);
-        if (Map.class.isAssignableFrom(obj.getClass()))
-            return getMapAsObj(obj);
-        if (isNumericType(objType) || isBooleanType(objType))
-            return obj.toString();
-        if (isCustomObjectType(objType))
-            return toJsonObject(obj);
-        return "\"" + obj.toString() + "\"";
-    }
-
-    private static boolean isBooleanType(final String fieldType)
-    {
-        return fieldType.equals("boolean") || fieldType.equals("Boolean");
-    }
-
-    private static boolean isNumericType(final String fieldType)
-    {
-        return _numericTypes.contains(fieldType);
-    }
-
-    private static boolean isCustomObjectType(String fieldType)
-    {
-        return !(_numericTypes.contains(fieldType) || _nonNumericTypes.contains(fieldType));
-    }
-
-    private static String toJsonObject(final Object obj)
-    {
-        String values = "";
+        sb.append("{ ");
         for (Field field : getFields(obj))
-            values += ("\"" + field.getName() + "\": " + toJsonValue(getFieldValue(field, obj)) + ", ");
-        return wrapCommaSeparatedValues('{', '}', values);
+        {
+            sb.append("\"").append(field.getName()).append("\": ");
+            writeJsonValue(sb, getFieldValue(field, obj)).append(", ");
+        }
+        removeExtraComma(sb).append("}");
     }
 
-    private static String getMapAsObj(final Object obj)
+    private static void writeList(final StringBuilder sb, final Object list)
     {
-        String values = "";
-        for (Object entry : ((Map)obj).entrySet())
-            values += "{ \"" + ((Map.Entry)entry).getKey() + "\": " + toJsonValue(((Map.Entry)entry).getValue()) + " }, ";
-        return wrapCommaSeparatedValues('[', ']', values);
+        writeJsonArray(sb, () -> {
+            for (Object item : (List<?>) list)
+                writeJsonValue(sb, item).append(", "); });
     }
 
-    private static String toJsonArray(final Object array)
+    private static void writeArray(final StringBuilder sb, final Object array)
     {
-        String values = "";
-        for (int i = 0; i < Array.getLength(array); i ++)
-            values += toJsonValue(Array.get(array, i)) + ", ";
-        return wrapCommaSeparatedValues('[', ']', values);
+        writeJsonArray(sb, () -> {
+            for (int i = 0; i < Array.getLength(array); i ++)
+                writeJsonValue(sb, Array.get(array, i)).append(", ");});
     }
 
-    private static String getListAsJsonArray(final Object list)
+    private static void writeMap(final StringBuilder sb, final Object map)
     {
-        String values = "";
-        for (Object item : (List<?>) list)
-            values += toJsonValue(item) + ", ";
-        return wrapCommaSeparatedValues('[', ']', values);
+        writeJsonArray(sb, () -> {
+            for (Object entry : ((Map)map).entrySet())
+            {
+                sb.append("{ \"").append(((Map.Entry)entry).getKey()).append("\": ");
+                writeJsonValue(sb, ((Map.Entry)entry).getValue()).append(" }, "); }
+            });
     }
 
-    private static String wrapCommaSeparatedValues(final char opening, final char closing, final String values)
+    private static void writeJsonArray(final StringBuilder sb, final Runnable runnable)
     {
-        return !values.contains(",")
-                ? opening + " " + closing
-                : opening + " " + values.substring(0, values.lastIndexOf(",")) + " " + closing;
+        sb.append("[ ");
+        runnable.run();
+        removeExtraComma(sb).append("]");
+    }
+
+    private static StringBuilder removeExtraComma(final StringBuilder sb)
+    {
+        int lastCommaIndex = sb.lastIndexOf(",");
+        return lastCommaIndex == -1 ? sb : sb.deleteCharAt(lastCommaIndex);
     }
 }

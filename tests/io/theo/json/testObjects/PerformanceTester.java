@@ -11,14 +11,14 @@ public final class PerformanceTester
         for (int i = 0; i < numWarmUps; i++)
             operation.run();
 
-        long startTime = System.currentTimeMillis();
+        long startTimeNano = System.nanoTime();
         for (int i = 0; i < numTestOps; i++)
             operation.run();
-        long stopTime = System.currentTimeMillis();
+        long stopTimeNano = System.nanoTime();
 
-        long durationMillis = stopTime - startTime;
-        double millisPerOp = (double)durationMillis / numTestOps;
-        double opsPerSecond = (double)1000 / millisPerOp;
+        long durationNano = stopTimeNano - startTimeNano;
+        double nanosPerOp = (double)durationNano / (double)numTestOps;
+        double opsPerSecond = (double)1_000_000_000 / nanosPerOp;
         return opsPerSecond;
     }
 }
