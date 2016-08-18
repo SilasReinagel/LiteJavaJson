@@ -169,6 +169,14 @@ public class JsonSerializerTests
     }
 
     @Test
+    public void JsonSerializer_ToJsonMapStringByteArrayData_IsCorrect()
+    {
+        String json = JsonSerializer.toJsonString(new StringByteArrayMapValueObject(Collections.singletonMap("Bytes", new byte[]{ 1, 2, 3 })));
+
+        Assert.assertEquals("{ \"Value\": [ { \"Bytes\": [ 1, 2, 3 ] } ] }", json);
+    }
+
+    @Test
     public void JsonSerializer_ToJsonMapDataMultipleEntries_IsCorrect()
     {
         Map<String, Integer> map = new HashMap<>();

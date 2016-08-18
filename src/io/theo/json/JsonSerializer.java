@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 public final class JsonSerializer
 {
     private static final List<String> _numericTypes = Arrays.asList(
+            "byte", "Byte",
             "int", "Integer",
             "long", "Long",
             "float", "Float",
@@ -77,11 +78,13 @@ public final class JsonSerializer
             return getListAsJsonArray(obj);
         if (obj.getClass().isArray())
             return toJsonArray(obj);
-        if (obj instanceof Map)
+        if (Map.class.isAssignableFrom(obj.getClass()))
             return getMapAsObj(obj);
         if (isNumericType(objType) || isBooleanType(objType))
             return obj.toString();
-        return toJsonObject(obj);
+        if (isCustomObjectType(objType))
+            return toJsonObject(obj);
+        return "\"" + obj.toString() + "\"";
     }
 
     private static boolean isBooleanType(final String fieldType)
