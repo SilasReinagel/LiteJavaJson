@@ -3,8 +3,7 @@ package io.theo.json;
 import io.theo.json.testObjects.*;
 import org.junit.*;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 
 public class JsonSerializerTests
 {
@@ -159,6 +158,25 @@ public class JsonSerializerTests
         String json = JsonSerializer.toJsonString(new SerializableObject("Pikachu"));
 
         Assert.assertEquals("{ \"Value\": \"Pikachu\" }", json);
+    }
+
+    @Test
+    public void JsonSerializer_ToJsonMapDataSingleEntry_IsCorrect()
+    {
+        String json = JsonSerializer.toJsonString(new SimpleStringMapValueObject(Collections.singletonMap("SampleName", "SampleValue")));
+
+        Assert.assertEquals("{ \"Value\": [ { \"SampleName\": \"SampleValue\" } ] }", json);
+    }
+
+    @Test
+    public void JsonSerializer_ToJsonMapDataMultipleEntries_IsCorrect()
+    {
+        Map<String, Integer> map = new HashMap<>();
+        map.put("Adam", 1);
+        map.put("Eve", 2);
+        String json = JsonSerializer.toJsonString(map);
+
+        Assert.assertEquals("[ { \"Adam\": 1 }, { \"Eve\": 2 } ]", json);
     }
 
     @Test

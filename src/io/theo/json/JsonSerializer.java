@@ -71,17 +71,17 @@ public final class JsonSerializer
 
         String objType = obj.getClass().getSimpleName();
 
+        if (obj instanceof String || obj.getClass().isEnum())
+            return "\"" + obj.toString() + "\"";
         if (obj instanceof List<?>)
             return getListAsJsonArray(obj);
         if (obj.getClass().isArray())
             return toJsonArray(obj);
-        if (obj.getClass().isEnum())
-            return "\"" + obj.toString() + "\"";
-        if (isCustomObjectType(objType))
-            return toJsonObject(obj);
+        if (obj instanceof Map)
+            return getMapAsObj(obj);
         if (isNumericType(objType) || isBooleanType(objType))
             return obj.toString();
-        return "\"" + obj.toString() + "\"";
+        return toJsonObject(obj);
     }
 
     private static boolean isBooleanType(final String fieldType)
@@ -105,6 +105,14 @@ public final class JsonSerializer
         for (Field field : getFields(obj))
             values += ("\"" + field.getName() + "\": " + toJsonValue(getFieldValue(field, obj)) + ", ");
         return wrapCommaSeparatedValues('{', '}', values);
+    }
+
+    private static String getMapAsObj(final Object obj)
+    {
+        String values = "";
+        for (Object entry : ((Map)obj).entrySet())
+            values += "{ \"" + ((Map.Entry)entry).getKey() + "\": " + toJsonValue(((Map.Entry)entry).getValue()) + " }, ";
+        return wrapCommaSeparatedValues('[', ']', values);
     }
 
     private static String toJsonArray(final Object array)

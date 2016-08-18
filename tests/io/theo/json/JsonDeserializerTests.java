@@ -283,6 +283,16 @@ public class JsonDeserializerTests
     }
 
     @Test
+    public void JsonDeserializer_DataMapString_IsCorrect()
+    {
+        SimpleStringMapValueObject obj = JsonDeserializer.toObj(SimpleStringMapValueObject.class,
+                "{ \"Value\": [ { \"Hello\": \"World\" } ] }");
+
+        Assert.assertEquals(1, obj.Value.size());
+        Assert.assertEquals("World", obj.Value.get("Hello"));
+    }
+
+    @Test
     public void JsonDeserializer_ArrayEmpty_IsCorrect()
     {
         SimpleStringArrayValueObject obj = JsonDeserializer.toObj(SimpleStringArrayValueObject.class,
@@ -338,4 +348,5 @@ public class JsonDeserializerTests
 
         Assert.assertArrayEquals(new long[] { 123451234512345L, 234562345623456L }, obj.Value);
     }
+
 }

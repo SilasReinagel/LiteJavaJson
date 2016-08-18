@@ -79,15 +79,26 @@ public final class JsonDeserializer
         return fields.stream().collect(Collectors.toList());
     }
 
-    private static Map<String, String> getJsonElements(final String jsonString)
+    private static Map<String, String> getRawJsonElements(final String jsonString)
     {
         validateJsonString(jsonString);
         return getElementStrings(unwrap(jsonString)).stream().collect(Collectors.toMap(x -> getElementKey(x), x -> getElementValue(x)));
     }
 
+    private static Map<String, String> getJsonElements(final String jsonString)
+    {
+        validateJsonString(jsonString);
+        return getElementStrings(unwrap(jsonString)).stream().collect(Collectors.toMap(x -> getUnwrappedElementKey(x), x -> getElementValue(x)));
+    }
+
+    private static String getUnwrappedElementKey(final String input)
+    {
+        return getJsonStringValue(getElementKey(input));
+    }
+
     private static String getElementKey(final String input)
     {
-        return getJsonStringValue(input.substring(0, input.indexOf(":")).trim());
+        return input.substring(0, input.indexOf(":")).trim();
     }
 
     private static String getElementValue(final String input)
@@ -144,11 +155,13 @@ public final class JsonDeserializer
         return ch == ',' || isObjectCloser(ch);
     }
 
-    // Field is required for Lists because of Generic Type Erasure
+    // Field is required for Lists and Maps because of Generic Type Erasure
     private static Object getObjectValue(final Field field, final String stringValue)
     {
         if (isJsonArray(stringValue) && field.getType().getSimpleName().equals("List"))
             return toObjectList((ParameterizedType)field.getGenericType(), stringValue);
+        if (isJsonArray(stringValue) && field.getType().getSimpleName().equals("Map"))
+            return toObjectMap((ParameterizedType)field.getGenericType(), stringValue);
         return getObjectValue(field.getType(), stringValue);
     }
 
@@ -276,6 +289,23 @@ public final class JsonDeserializer
     private static Class getArrayItemType(final Class type)
     {
         return type.isArray() ? type.getComponentType() : type;
+    }
+
+    private static Object toObjectMap(final ParameterizedType genericType, final String jsonArray)
+    {
+        Type keyType = genericType.getActualTypeArguments()[0];
+        Type valueType = genericType.getActualTypeArguments()[1];
+        Map<String, String> itemStrings = getRawJsonElements(unwrap(jsonArray));
+        Map itemMap = new HashMap<>();
+        itemStrings.entrySet().forEach(x -> putItem(x, itemMap, (Class)keyType, (Class)valueType));
+        return itemMap;
+    }
+
+    private static void putItem(Map.Entry<String, String> item, Map map, final Class keyType, final Class valueType)
+    {
+        Object key = toObj(keyType, item.getKey());
+        Object value = toObj(valueType, item.getValue());
+        map.put(key, value);
     }
 
     private static List toObjectList(final ParameterizedType type, final String jsonArray)
