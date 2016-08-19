@@ -209,7 +209,7 @@ public class JsonSerializerTests
     }
 
     @Test
-    public void JsonSerializer_PerformanceTestLargeMapOfByteArray_BetterThanTenThousandOpsPerSecond()
+    public void JsonSerializer_PerformanceTestLargeMapOfByteArray_BetterThanFiveThousandOpsPerSecond()
     {
         Map<String, byte[]> items = new HashMap<>();
         IntStream.range(0, 100).forEach(x -> items.put(Integer.toString(x), getRandomBytes(100)));
@@ -217,7 +217,7 @@ public class JsonSerializerTests
         double opsPerSecond = PerformanceTester.getOpsPerSecond(2000, 500, () -> JsonSerializer.toJsonString(items));
 
         System.out.println("100 Item Byte Array Map: " + (long)opsPerSecond + " ops/s");
-        Assert.assertTrue(opsPerSecond > 10000);
+        Assert.assertTrue(opsPerSecond > 5000);
     }
 
     private byte[] getRandomBytes(int nBytes)

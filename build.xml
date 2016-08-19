@@ -57,6 +57,7 @@
                     <include name="**/*Tests*.class"/>
                 </fileset>
                 <formatter type="plain"/>
+				<formatter type="plain" usefile="false"/>
             </batchtest>
         </junit>
 	</target>
