@@ -5,10 +5,37 @@ import sun.reflect.ReflectionFactory;
 import java.lang.reflect.*;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("WeakerAccess")
 public final class JsonDeserializer
 {
+    private static Map<Class, Constructor> _constructors = new HashMap<>();
+    private static Map<Field, ParameterizedType> _genericTypes = new HashMap<>();
+    private static Map<Class, List<Field>> _classFields = new HashMap<>();
+    private static Map<Class, String> _canonicalNameByClass = new HashMap<>();
+    private static Map<String, Class> _classByCanonicalName = new HashMap<>();
+
+    private static Map<Class, Function<String, Object>> _parsers = new HashMap<Class, Function<String, Object>>()
+    {{
+        put(byte.class, x -> Byte.parseByte(x));
+        put(Byte.class, x -> Byte.parseByte(x));
+        put(boolean.class, x -> Boolean.parseBoolean(x));
+        put(Boolean.class, x -> Boolean.parseBoolean(x));
+        put(int.class, x -> Integer.parseInt(x));
+        put(Integer.class, x -> Integer.parseInt(x));
+        put(long.class, x -> Long.parseLong(x));
+        put(Long.class, x -> Long.parseLong(x));
+        put(float.class, x -> Float.parseFloat(x));
+        put(Float.class, x -> Float.parseFloat(x));
+        put(double.class, x -> Double.parseDouble(x));
+        put(Double.class, x -> Double.parseDouble(x));
+        put(LocalDateTime.class, x -> LocalDateTime.parse(x));
+        put(String.class, x -> getUnwrappedString(x));
+        put(Object.class, x -> x);
+    }};
+
     private JsonDeserializer() { }
 
     public static boolean isJsonObject(final String input)
@@ -19,7 +46,7 @@ public final class JsonDeserializer
     @SuppressWarnings("unchecked")
     public static <T> T toObj(final Class<T> type, final String jsonString)
     {
-        return (T) getObjectValue(type, jsonString);
+        return (T)getObjectValue(type, jsonString);
     }
 
     @SuppressWarnings("unchecked")
@@ -31,7 +58,7 @@ public final class JsonDeserializer
     @SuppressWarnings("unchecked")
     public static <T> T getElementValue(final Class<T> type, final String elementName, final String jsonString)
     {
-        return (T) getObjectValue(type, getJsonElements(jsonString).get(elementName));
+        return (T)getObjectValue(type, getJsonElements(jsonString).get(elementName));
     }
 
     public static String getElementRawValue(final String elementName, final String jsonString)
@@ -68,7 +95,15 @@ public final class JsonDeserializer
             throw new RuntimeException("Invalid Json string: " + jsonString);
     }
 
-    private static List<Field> getFields(Object obj)
+    private static List<Field> getFields(final Object obj)
+    {
+        Class objClass = obj.getClass();
+        if (!_classFields.containsKey(objClass))
+            cacheClassFields(obj);
+        return _classFields.get(objClass);
+    }
+
+    private static void cacheClassFields(final Object obj)
     {
         Set<Field> fields = new LinkedHashSet<>();
         Arrays.stream(obj.getClass().getFields())
@@ -76,19 +111,20 @@ public final class JsonDeserializer
         Arrays.stream(obj.getClass().getDeclaredFields())
                 .filter(x -> Modifier.isPrivate(x.getModifiers()) && !Modifier.isStatic(x.getModifiers()))
                 .forEach(x -> fields.add(x));
-        return fields.stream().collect(Collectors.toList());
+        List<Field> fieldsList = fields.stream().collect(Collectors.toList());
+        _classFields.put(obj.getClass(), fieldsList);
     }
 
     private static Map<String, String> getRawJsonElements(final String jsonString)
     {
         validateJsonString(jsonString);
-        return getElementStrings(unwrap(jsonString)).stream().collect(Collectors.toMap(x -> getElementKey(x), x -> getElementValue(x)));
+        return getElements(jsonString).stream().collect(Collectors.toMap(x -> getElementKey(x), x -> getElementValue(x)));
     }
 
     private static Map<String, String> getJsonElements(final String jsonString)
     {
         validateJsonString(jsonString);
-        return getElementStrings(unwrap(jsonString)).stream().collect(Collectors.toMap(x -> getUnwrappedElementKey(x), x -> getElementValue(x)));
+        return getElements(jsonString).stream().collect(Collectors.toMap(x -> getUnwrappedElementKey(x), x -> getElementValue(x)));
     }
 
     private static String getUnwrappedElementKey(final String input)
@@ -106,38 +142,37 @@ public final class JsonDeserializer
         return input.substring(input.indexOf(":") + 1).trim();
     }
 
-    private static List<String> getElementStrings(final String input)
+    private static List<String> getElements(final String input)
     {
-        List<String> values = new ArrayList<>();
+        List<String> elements = new ArrayList<>();
 
-        if (input.length() == 0)
-            return values;
-
-        boolean foundKey = false;
-        int currentDepth = 0;
-        String currentValue = "";
+        int startIndex = -1;
+        int endIndex = -1;
+        int objectDepth = 0;
         for (int i = 0; i < input.length(); i++)
         {
             char ch = input.charAt(i);
-            if (currentDepth != 0 || ch != ',')
-                currentValue += ch;
-            if (!foundKey && ch == ':')
-                foundKey = true;
-            if (foundKey && isObjectOpener(ch))
-                currentDepth++;
-            if (currentDepth != 0 && isObjectCloser(ch))
-                currentDepth--;
-            if (foundKey && currentDepth == 0 && isTerminator(ch))
+            if (Character.isWhitespace(ch))
+                continue;
+            if (isObjectCloser(ch))
+                objectDepth--;
+            if (startIndex == -1 && objectDepth > 0)
+                startIndex = i;
+            if (startIndex != -1 && objectDepth > 0)
+                endIndex = i + 1;
+            if (isObjectOpener(ch))
+                objectDepth++;
+            if (objectDepth == 1 && ch == ',')
+                endIndex = endIndex - 1;
+            if (objectDepth == 0 || objectDepth == 1 && ch == ',')
             {
-                values.add(currentValue);
-                currentValue = "";
-                foundKey = false;
+                if (startIndex > 0 && endIndex > startIndex)
+                    elements.add(input.substring(startIndex, endIndex));
+                startIndex = -1;
             }
         }
 
-        if (currentValue.trim().length() > 0)
-            values.add(currentValue);
-        return values;
+        return elements;
     }
 
     private static boolean isObjectOpener(final char ch)
@@ -150,64 +185,35 @@ public final class JsonDeserializer
         return ch == '}' || ch == ']';
     }
 
-    private static boolean isTerminator(final char ch)
-    {
-        return ch == ',' || isObjectCloser(ch);
-    }
-
     // Field is required for Lists and Maps because of Generic Type Erasure
     private static Object getObjectValue(final Field field, final String stringValue)
     {
-        if (isJsonArray(stringValue) && field.getType().getSimpleName().equals("List"))
-            return toObjectList((ParameterizedType)field.getGenericType(), stringValue);
-        if (isJsonArray(stringValue) && field.getType().getSimpleName().equals("Map"))
-            return toObjectMap((ParameterizedType)field.getGenericType(), stringValue);
+        if (List.class.isAssignableFrom(field.getType()) && isJsonArray(stringValue))
+            return toObjectList(getParameterizedType(field), stringValue);
+        if (Map.class.isAssignableFrom(field.getType()) && isJsonArray(stringValue))
+            return toObjectMap(getParameterizedType(field), stringValue);
         return getObjectValue(field.getType(), stringValue);
     }
 
     private static Object getObjectValue(final Class type, final String stringValue)
     {
-        String fieldType = type.getSimpleName();
-        if (isJsonObject(stringValue))
-            return getJsonObj(type.getCanonicalName(), stringValue);
-        if (byte[].class.isAssignableFrom(type) && isJsonString(stringValue))
-            return getBase64Bytes(stringValue);
-        if (isJsonArray(stringValue) && type.isArray())
-            return toArray(type, stringValue);
-        if (fieldType.equals("String"))
-            return getJsonStringValue(stringValue);
-
-        String extractedValue = stringValue.replace("\"", "");
-        if (fieldType.equals("byte") || fieldType.equals("Byte"))
-            return Byte.parseByte(extractedValue);
-        if (fieldType.equals("boolean") || fieldType.equals("Boolean"))
-            return Boolean.parseBoolean(extractedValue);
-        if (fieldType.equals("int") || fieldType.equals("Integer"))
-            return Integer.parseInt(extractedValue);
-        if (fieldType.equals("long") || fieldType.equals("Long"))
-            return Long.parseLong(extractedValue);
-        if (fieldType.equals("float") || fieldType.equals("Float"))
-            return Float.parseFloat(extractedValue);
-        if (fieldType.equals("double") || fieldType.equals("Double"))
-            return Double.parseDouble(extractedValue);
+        String unwrapped = getUnwrappedString(stringValue);
         if (type.isEnum())
-            return getEnumValue(type, extractedValue);
-        if (fieldType.equals("LocalDateTime"))
-            return LocalDateTime.parse(extractedValue);
-        if (fieldType.equals("Object"))
-            return extractedValue;
-
+            return Enum.valueOf(type, unwrapped);
+        if (type.isArray() && isJsonArray(stringValue))
+            return toArray(type, stringValue);
+        if (type.equals(byte[].class) && isJsonString(stringValue))
+            return getBase64Bytes(unwrapped);
+        if (isJsonObject(stringValue))
+            return getJsonObj(getCanonicalName(type), stringValue);
+        if (_parsers.containsKey(type))
+            return _parsers.get(type).apply(unwrapped);
         return null;
     }
 
     private static Object getBase64Bytes(final String stringValue)
     {
-        return Base64.getDecoder().decode(unwrap(stringValue));
-    }
-
-    private static Object getEnumValue(final Class type, final String stringValue)
-    {
-        return Enum.valueOf(type, stringValue);
+        return Base64.getDecoder().decode(stringValue);
     }
 
     private static String getJsonStringValue(final String input)
@@ -215,18 +221,37 @@ public final class JsonDeserializer
         return isJsonString(input) ? unwrap(input) : null;
     }
 
+    private static String getUnwrappedString(final String input)
+    {
+        return isJsonString(input) ? unwrap(input) : input;
+    }
+
     private static boolean isJsonString(final String input)
     {
         return isWrappedWith("\"", "\"", input);
+    }
+
+    private static String getCanonicalName(final Class type)
+    {
+        if(!_canonicalNameByClass.containsKey(type))
+            _canonicalNameByClass.put(type, type.getCanonicalName());
+        return _canonicalNameByClass.get(type);
+    }
+
+    private static ParameterizedType getParameterizedType(final Field field)
+    {
+        if (!_genericTypes.containsKey(field))
+            _genericTypes.put(field, (ParameterizedType)field.getGenericType());
+        return _genericTypes.get(field);
     }
 
     private static <T> T createNewInstance(final Class<T> type)
     {
         try
         {
-            ReflectionFactory factory = ReflectionFactory.getReflectionFactory();
-            Constructor constructor = factory.newConstructorForSerialization(type, Object.class.getDeclaredConstructor());
-            return type.cast(constructor.newInstance());
+            if (!_constructors.containsKey(type))
+                _constructors.put(type, ReflectionFactory.getReflectionFactory().newConstructorForSerialization(type, Object.class.getDeclaredConstructor()));
+            return type.cast(_constructors.get(type).newInstance());
         }
         catch (InstantiationException | NoSuchMethodException | InvocationTargetException | IllegalAccessException e)
         {
@@ -234,11 +259,14 @@ public final class JsonDeserializer
         }
     }
 
-    private static <T> T getJsonObj(final String fullyQualifiedTypeName, final String jsonString)
+    @SuppressWarnings("unchecked")
+    private static <T> T getJsonObj(final String canonicalName, final String jsonString)
     {
         try
         {
-            return (T) getJsonObj(Class.forName(fullyQualifiedTypeName), jsonString);
+            if (!_classByCanonicalName.containsKey(canonicalName))
+                _classByCanonicalName.put(canonicalName, Class.forName(canonicalName));
+            return (T) getJsonObj(_classByCanonicalName.get(canonicalName), jsonString);
         }
         catch (ClassNotFoundException e)
         {
@@ -308,7 +336,7 @@ public final class JsonDeserializer
         return itemMap;
     }
 
-    private static void putItem(Map.Entry<String, String> item, Map map, final Class keyType, final Class valueType)
+    private static void putItem(final Map.Entry<String, String> item, Map map, final Class keyType, final Class valueType)
     {
         Object key = toObj(keyType, item.getKey());
         Object value = toObj(valueType, item.getValue());
@@ -325,44 +353,12 @@ public final class JsonDeserializer
         return new ArrayList<>();
     }
 
-    private static <T> List<T> toObjectList(final Class<T> itemType, final String jsonArray)
+    private static List toObjectList(final Class type, final String jsonArray)
     {
-        return getStringValuesFromJsonArray(jsonArray).stream()
-                .map(x -> (T)getObjectValue(getArrayItemType(itemType), x.trim()))
+        Class itemType = getArrayItemType(type);
+        return getElements(jsonArray).stream()
+                .map(x -> getObjectValue(itemType, x))
                 .collect(Collectors.toList());
-    }
-
-    private static List<String> getStringValuesFromJsonArray(final String jsonArray)
-    {
-        List<String> valueStrings = new ArrayList<>();
-
-        int startIndex = -1;
-        int endIndex = -1;
-        int objectDepth = 0;
-        for (int i = 0; i < jsonArray.length(); i++)
-        {
-            char ch = jsonArray.charAt(i);
-            if (Character.isWhitespace(ch))
-                continue;
-            if (isObjectCloser(ch))
-                objectDepth--;
-            if (startIndex == -1 && objectDepth > 0)
-                startIndex = i;
-            if (startIndex != -1 && objectDepth > 0)
-                endIndex = i + 1;
-            if (isObjectOpener(ch))
-                objectDepth++;
-            if (objectDepth == 1 && ch == ',')
-                endIndex = endIndex - 1;
-            if (objectDepth == 0 || objectDepth == 1 && ch == ',')
-            {
-                if (startIndex > 0 && endIndex > startIndex)
-                    valueStrings.add(jsonArray.substring(startIndex, endIndex));
-                startIndex = -1;
-            }
-        }
-
-        return valueStrings;
     }
 
     private static Object toArray(final Class type, final String jsonArray)

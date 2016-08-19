@@ -1,8 +1,7 @@
 package io.theo.json;
 
 import io.theo.json.testObjects.*;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.*;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -151,15 +150,6 @@ public class JsonDeserializerTests
     }
 
     @Test
-    public void JsonDeserializer_DataNonWrappedString_NotTreatedAsString()
-    {
-        SimpleStringValueObject obj = JsonDeserializer.toObj(SimpleStringValueObject.class,
-                "{ \"Value\": SampleName }");
-
-        Assert.assertNotEquals("SampleName", obj.Value);
-    }
-
-    @Test
     public void JsonDeserializer_DataInteger_IsCorrect()
     {
         SimpleIntegerValueObject obj = JsonDeserializer.toObj(SimpleIntegerValueObject.class,
@@ -238,6 +228,16 @@ public class JsonDeserializerTests
         Assert.assertEquals(412345678, obj.longValue);
         Assert.assertEquals(20.16, obj.floatValue, 0.01);
         Assert.assertEquals(12.23, obj.dblValue, 0.01);
+    }
+
+    @Test
+    // This is an enhancement on the Json spec. It allows for more flexible output objects.
+    public void JsonDeserializer_NonWrappedString_CanBeDeserializedToString()
+    {
+        SimpleStringValueObject obj = JsonDeserializer.toObj(SimpleStringValueObject.class,
+                "{ \"Value\": SampleName }");
+
+        Assert.assertEquals("SampleName", obj.Value);
     }
 
     @Test
@@ -358,4 +358,14 @@ public class JsonDeserializerTests
         Assert.assertArrayEquals(new long[] { 123451234512345L, 234562345623456L }, obj.Value);
     }
 
+    @Test
+    public void JsonDeserializer_PerformanceTest_FasterThanTenThousandOpsPerSecond()
+    {
+        String json = "{ \"Value\": [ \"JC Denton\", \"Adam Jensen\", \"Paul Denton\", \"David Sarif\" ] }";
+
+        double opsPerSecond = PerformanceTester.getOpsPerSecond(2000, 500, () -> JsonDeserializer.toObj(SimpleStringListValueObject.class, json));
+
+        System.out.println("Deserialize Simple POJO: " + (long)opsPerSecond + " ops/s");
+        Assert.assertTrue(opsPerSecond > 10000);
+    }
 }

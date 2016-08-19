@@ -192,39 +192,31 @@ public class JsonSerializerTests
 
         double opsPerSecond = PerformanceTester.getOpsPerSecond(2000, 500, () -> JsonSerializer.toJsonString(obj));
 
-        System.out.println("Simple POJO: " + (long)opsPerSecond + " ops/s");
+        System.out.println("Serialize Simple POJO: " + (long)opsPerSecond + " ops/s");
         Assert.assertTrue(opsPerSecond > 10000);
     }
 
     @Test
-    public void JsonSerializer_PerformanceTestLargeList_BetterThanTenThousandOpsPerSecond()
+    public void JsonSerializer_PerformanceTestLargeList_BetterThanFiveThousandOpsPerSecond()
     {
         List<String> items = new ArrayList<>();
         IntStream.range(0, 100).forEach(x -> items.add(UUID.randomUUID().toString()));
 
         double opsPerSecond = PerformanceTester.getOpsPerSecond(2000, 500, () -> JsonSerializer.toJsonString(items));
 
-        System.out.println("100 Item List: " + (long)opsPerSecond + " ops/s");
-        Assert.assertTrue(opsPerSecond > 10000);
-    }
-
-    @Test
-    public void JsonSerializer_PerformanceTestLargeMapOfByteArray_BetterThanFiveThousandOpsPerSecond()
-    {
-        Map<String, byte[]> items = new HashMap<>();
-        IntStream.range(0, 100).forEach(x -> items.put(Integer.toString(x), getRandomBytes(100)));
-
-        double opsPerSecond = PerformanceTester.getOpsPerSecond(2000, 500, () -> JsonSerializer.toJsonString(items));
-
-        System.out.println("100 Item Byte Array Map: " + (long)opsPerSecond + " ops/s");
+        System.out.println("Serialize 100 Item List: " + (long)opsPerSecond + " ops/s");
         Assert.assertTrue(opsPerSecond > 5000);
     }
 
-    private byte[] getRandomBytes(int nBytes)
+    @Test
+    public void JsonSerializer_PerformanceTestLargeStringMap_BetterThanFiveThousandOpsPerSecond()
     {
-        byte[] bytes = new byte[nBytes];
-        for (int i = 0; i < nBytes; i ++)
-            bytes[i] = (byte)_rnd.nextInt(128);
-        return bytes;
+        Map<String, String> items = new HashMap<>();
+        IntStream.range(0, 100).forEach(x -> items.put(Integer.toString(x), UUID.randomUUID().toString()));
+
+        double opsPerSecond = PerformanceTester.getOpsPerSecond(2000, 500, () -> JsonSerializer.toJsonString(items));
+
+        System.out.println("Serialize 100 Item Map: " + (long)opsPerSecond + " ops/s");
+        Assert.assertTrue(opsPerSecond > 5000);
     }
 }
