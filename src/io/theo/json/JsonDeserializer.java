@@ -115,12 +115,6 @@ public final class JsonDeserializer
         _classFields.put(obj.getClass(), fieldsList);
     }
 
-    private static Map<String, String> getRawJsonElements(final String jsonString)
-    {
-        validateJsonString(jsonString);
-        return getElements(jsonString).stream().collect(Collectors.toMap(x -> getElementKey(x), x -> getElementValue(x)));
-    }
-
     private static Map<String, String> getJsonElements(final String jsonString)
     {
         validateJsonString(jsonString);
@@ -334,6 +328,11 @@ public final class JsonDeserializer
         Map itemMap = new HashMap<>();
         itemStrings.entrySet().forEach(x -> putItem(x, itemMap, (Class)keyType, (Class)valueType));
         return itemMap;
+    }
+
+    private static Map<String, String> getRawJsonElements(final String jsonString)
+    {
+        return getElements(jsonString).stream().collect(Collectors.toMap(x -> getElementKey(x), x -> getElementValue(x)));
     }
 
     private static void putItem(final Map.Entry<String, String> item, Map map, final Class keyType, final Class valueType)

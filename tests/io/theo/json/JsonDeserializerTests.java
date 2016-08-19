@@ -218,29 +218,6 @@ public class JsonDeserializerTests
     }
 
     @Test
-    // This is an enhancement on the Json spec. It allows for more flexible output objects.
-    public void JsonDeserializer_StringWrappedNumbers_DeserializedIntoNumericFields()
-    {
-        NumericTypesObject obj = JsonDeserializer.toObj(NumericTypesObject.class,
-                "{ \"intValue\": \"79\", \"longValue\": \"412345678\", \"floatValue\": \"20.16\", \"dblValue\": \"12.23\" }");
-
-        Assert.assertEquals(79, obj.intValue);
-        Assert.assertEquals(412345678, obj.longValue);
-        Assert.assertEquals(20.16, obj.floatValue, 0.01);
-        Assert.assertEquals(12.23, obj.dblValue, 0.01);
-    }
-
-    @Test
-    // This is an enhancement on the Json spec. It allows for more flexible output objects.
-    public void JsonDeserializer_NonWrappedString_CanBeDeserializedToString()
-    {
-        SimpleStringValueObject obj = JsonDeserializer.toObj(SimpleStringValueObject.class,
-                "{ \"Value\": SampleName }");
-
-        Assert.assertEquals("SampleName", obj.Value);
-    }
-
-    @Test
     public void JsonDeserializer_DataEmptyList_IsCorrect()
     {
         SimpleStringListValueObject obj = JsonDeserializer.toObj(SimpleStringListValueObject.class,
@@ -283,6 +260,15 @@ public class JsonDeserializerTests
     }
 
     @Test
+    public void JsonDeserializer_DataEmptyMap_IsCorrect()
+    {
+        SimpleStringMapValueObject obj = JsonDeserializer.toObj(SimpleStringMapValueObject.class,
+                "{ \"Value\": [ ] }");
+
+        Assert.assertEquals(0, obj.Value.size());
+    }
+
+    @Test
     public void JsonDeserializer_DataMapString_IsCorrect()
     {
         SimpleStringMapValueObject obj = JsonDeserializer.toObj(SimpleStringMapValueObject.class,
@@ -290,6 +276,39 @@ public class JsonDeserializerTests
 
         Assert.assertEquals(1, obj.Value.size());
         Assert.assertEquals("World", obj.Value.get("Hello"));
+    }
+
+    @Test
+    public void JsonDeserializer_DataMapStringBase64ByteArray_IsCorrect()
+    {
+        StringByteArrayMapValueObject obj = JsonDeserializer.toObj(StringByteArrayMapValueObject.class,
+                "{ \"Value\": [ { \"1\": \"AQID\" } ] }");
+
+        Assert.assertEquals(1, obj.Value.size());
+        Assert.assertArrayEquals(new byte[] { 1,2,3 }, obj.Value.get("1"));
+    }
+
+    @Test
+    // This is an enhancement on the Json spec. It allows for more flexible output objects.
+    public void JsonDeserializer_StringWrappedNumbers_DeserializedIntoNumericFields()
+    {
+        NumericTypesObject obj = JsonDeserializer.toObj(NumericTypesObject.class,
+                "{ \"intValue\": \"79\", \"longValue\": \"412345678\", \"floatValue\": \"20.16\", \"dblValue\": \"12.23\" }");
+
+        Assert.assertEquals(79, obj.intValue);
+        Assert.assertEquals(412345678, obj.longValue);
+        Assert.assertEquals(20.16, obj.floatValue, 0.01);
+        Assert.assertEquals(12.23, obj.dblValue, 0.01);
+    }
+
+    @Test
+    // This is an enhancement on the Json spec. It allows for more flexible output objects.
+    public void JsonDeserializer_NonWrappedString_CanBeDeserializedToString()
+    {
+        SimpleStringValueObject obj = JsonDeserializer.toObj(SimpleStringValueObject.class,
+                "{ \"Value\": SampleName }");
+
+        Assert.assertEquals("SampleName", obj.Value);
     }
 
     @Test

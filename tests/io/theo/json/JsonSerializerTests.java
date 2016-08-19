@@ -8,8 +8,6 @@ import java.util.stream.IntStream;
 
 public class JsonSerializerTests
 {
-    private Random _rnd = new Random();
-
     @Test
     public void JsonSerializer_ToJsonNull_IsCorrect()
     {
@@ -183,6 +181,14 @@ public class JsonSerializerTests
         String json = JsonSerializer.toJsonString(map);
 
         Assert.assertEquals("[ { \"Adam\": 1 }, { \"Eve\": 2 } ]", json);
+    }
+
+    @Test
+    public void JsonSerializer_ToJsonTwoCollectionsWithOneEmpty_IsCorrect()
+    {
+        String json = JsonSerializer.toJsonString(new TwoCollectionValueObject(Collections.singletonList("123"), new ArrayList<>()));
+
+        Assert.assertEquals("{ \"Value1\": [ \"123\" ], \"Value2\": [ ] }", json);
     }
 
     @Test

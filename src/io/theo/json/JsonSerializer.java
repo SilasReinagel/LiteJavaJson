@@ -154,6 +154,6 @@ public final class JsonSerializer
     private static StringBuilder removeExtraComma(final StringBuilder sb)
     {
         int lastCommaIndex = sb.lastIndexOf(",");
-        return lastCommaIndex == -1 ? sb : sb.deleteCharAt(lastCommaIndex);
+        return lastCommaIndex != sb.length() - 2 ? sb : sb.deleteCharAt(lastCommaIndex);
     }
 }
