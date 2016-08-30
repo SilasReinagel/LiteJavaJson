@@ -1,6 +1,7 @@
 # LiteJavaJson
 
 [![Build Status](https://travis-ci.org/TheoConfidor/LiteJavaJson.svg?branch=master)](https://travis-ci.org/TheoConfidor/LiteJavaJson)
+[![Code Quality](https://api.codacy.com/project/badge/Grade/a3fd5aa0f9d04e83a98981955e03c684)](https://www.codacy.com/app/silas-reinagel/LiteJavaJson?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=TheoConfidor/LiteJavaJson&amp;utm_campaign=Badge_Grade)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
 The purpose of this project is to provide a very simple, no-fluff, single source file Java JSON Serializer/Deserializer. 
