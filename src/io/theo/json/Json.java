@@ -76,6 +76,11 @@ public final class Json
         {
             super(message);
         }
+
+        public JsonException(final String message, Exception ex)
+        {
+            super(message, ex);
+        }
     }
     
     private static class JsonDeserializer
@@ -268,7 +273,7 @@ public final class Json
             }
             catch (InstantiationException | NoSuchMethodException | InvocationTargetException | IllegalAccessException e)
             {
-                throw new Error(e);
+                throw new JsonException("Unable to create new object instance.", e);
             }
         }
 
@@ -283,7 +288,7 @@ public final class Json
             }
             catch (ClassNotFoundException e)
             {
-                throw new Error(e);
+                throw new JsonException("Unknown class: '" + canonicalName + "'", e);
             }
         }
 
@@ -313,7 +318,7 @@ public final class Json
             }
             catch (IllegalAccessException e)
             {
-                throw new Error(e);
+                throw new JsonException("Unable to set field value: '" + field.getName() + "'");
             }
         }
 
@@ -518,7 +523,7 @@ public final class Json
             }
             catch (IllegalAccessException ex)
             {
-                throw new Error(ex);
+                throw new JsonException("Unable to get field value: '" + field.getName() + "'");
             }
         }
 

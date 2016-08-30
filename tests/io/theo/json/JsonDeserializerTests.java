@@ -376,15 +376,4 @@ public class JsonDeserializerTests
 
         Assert.assertArrayEquals(new long[] { 123451234512345L, 234562345623456L }, obj.Value);
     }
-
-    @Test
-    public void JsonDeserializer_PerformanceTest_FasterThanTenThousandOpsPerSecond()
-    {
-        String json = "{ \"Value\": [ \"JC Denton\", \"Adam Jensen\", \"Paul Denton\", \"David Sarif\" ] }";
-
-        double opsPerSecond = PerformanceTester.getOpsPerSecond(2000, 500, () -> Json.toObj(SimpleStringListValueObject.class, json));
-
-        System.out.println("Deserialize Simple POJO: " + (long)opsPerSecond + " ops/s");
-        Assert.assertTrue(opsPerSecond > 10000);
-    }
 }

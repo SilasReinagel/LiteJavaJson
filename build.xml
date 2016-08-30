@@ -61,6 +61,8 @@
 				<batchtest todir="${testOutDir}">
 					<fileset dir="${testOutDir}">
 						<include name="**/*Tests*.class"/>
+						<exclude name="**/*$*.class"/>
+						<exclude name="**/*IntegrationTests*.class"/>
 					</fileset>
 					<formatter type="plain"/>
 					<formatter type="plain" usefile="false"/>
@@ -83,7 +85,6 @@
 					<fileset dir="${srcDir}" />
 				</sourcefiles>
 			</structure>
-
 			
 			<html destdir="${buildDir}/codecoveragehtml/" />
 			<csv destfile="${buildDir}/codecoverage.csv" />
