@@ -70,6 +70,14 @@ public final class Json
         _classFields.put(obj.getClass(), fieldsList);
     }
 
+    private static class JsonException extends RuntimeException
+    {
+        public JsonException(final String message)
+        {
+            super(message);
+        }
+    }
+    
     private static class JsonDeserializer
     {
         private static Map<Class, Constructor> _constructors = new HashMap<>();
@@ -106,13 +114,13 @@ public final class Json
         {
             Map<String, String> jsonElements = getJsonElements(jsonString);
             if (jsonElements.size() == 0)
-                throw new RuntimeException("Json string contains no elements.");
+                throw new JsonException("Json string contains no elements.");
 
             List<Field> fieldsToMap = getFields(obj).stream()
                     .filter(x -> jsonElements.containsKey(x.getName()))
                     .collect(Collectors.toList());
             if (fieldsToMap.size() == 0)
-                throw new RuntimeException("No Json string elements match object type: " + obj.getClass());
+                throw new JsonException("No Json string elements match object type: " + obj.getClass());
 
             fieldsToMap.forEach(x -> setFieldValue(obj, x, jsonElements.get(x.getName())));
             return obj;
@@ -121,9 +129,9 @@ public final class Json
         private static void validateJsonString(final String jsonString)
         {
             if (jsonString == null)
-                throw new RuntimeException("Invalid Json string: null");
+                throw new JsonException("Invalid Json string: null");
             if (!isJsonObject(jsonString))
-                throw new RuntimeException("Invalid Json string: " + jsonString);
+                throw new JsonException("Invalid Json string: " + jsonString);
         }
 
         private static Map<String, String> getJsonElements(final String jsonString)
