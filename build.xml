@@ -1,11 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="LiteJavaJson" default="test" basedir=".">
-
+<project name="LiteJavaJson" default="test" basedir="."  xmlns:jacoco="antlib:org.jacoco.ant">
 	<property name="srcDir" value = "${basedir}/src"/>
 	<property name="testDir" value = "${basedir}/tests"/>
-    <property name="buildDir" value="${basedir}/bin/"/>
-    <property name="buildOutDir" value="${buildDir}/"/>
-    <property name="testOutDir" value="${buildDir}/"/>
+    <property name="buildDir" value="${basedir}/out/ant"/>
+    <property name="testOutDir" value="${buildDir}"/>
+<!-- 	<property name="result.dir" location="${buildDir}" /> -->
+<!-- 	<property name="result.classes.dir" location="${result.dir}/classes" /> -->
+	<property name="result.report.dir" location="${buildDir}/coverage/" />
+	<property name="result.exec.file" location="${buildDir}/jacoco.exec" />
+	
+	<taskdef uri="antlib:org.jacoco.ant" resource="org/jacoco/ant/antlib.xml">
+		<classpath path="lib/jacocoant.jar" />
+	</taskdef>
 	
 	<path id="src.path">    
 		<pathelement path="${srcDir}"/>
@@ -22,16 +28,15 @@
 		<path refid="compile.path"/>
 		<pathelement path="${testDir}"/>
 	</path>
-	
-	
-	<target name="init">	    
+		
+	<target name="clean">	    
 		<delete dir="${buildDir}"/>
 	</target>
 
-	<target name="compile" depends="init">
-        <mkdir dir="${buildOutDir}"/>
+	<target name="compile" depends="clean">
+        <mkdir dir="${buildDir}"/>
         <javac srcdir="${srcDir}" 
-				destdir="${buildOutDir}"
+				destdir="${buildDir}"
 				includeantruntime="false"/>
     </target>
 	
@@ -44,22 +49,46 @@
 		</javac>		
 	</target>
 
-	<target name="test" depends="compileUnitTests">
-        <junit printsummary="yes" fork="true" haltonfailure="yes">
-            <classpath>
-                <pathelement location="${testOutDir}"/>
-                <fileset dir="${basedir}">
-                    <include name="**/*.jar"/>
-                </fileset>
-            </classpath>
-            <batchtest todir="${testOutDir}">
-                <fileset dir="${testOutDir}">
-                    <include name="**/*Tests*.class"/>
-                </fileset>
-                <formatter type="plain"/>
-				<formatter type="plain" usefile="false"/>
-            </batchtest>
-        </junit>
+	<target name="test" depends="compileUnitTests">	
+		<jacoco:coverage destfile="${result.exec.file}">
+			<junit printsummary="yes" fork="true" haltonfailure="yes">
+				<classpath>
+					<pathelement location="${testOutDir}"/>
+					<fileset dir="${basedir}">
+						<include name="**/*.jar"/>
+					</fileset>
+				</classpath>
+				<batchtest todir="${testOutDir}">
+					<fileset dir="${testOutDir}">
+						<include name="**/*Tests*.class"/>
+					</fileset>
+					<formatter type="plain"/>
+					<formatter type="plain" usefile="false"/>
+				</batchtest>
+			</junit>			
+		</jacoco:coverage>
+	</target>
+	
+	<target name="codecoverage" depends="test">
+		<jacoco:report>
+			<executiondata>
+				<file file="${result.exec.file}" />
+			</executiondata>
+
+			<structure name="Code Coverage">
+				<classfiles>
+					<fileset dir="${buildDir}" />
+				</classfiles>
+				<sourcefiles encoding="UTF-8">
+					<fileset dir="${srcDir}" />
+				</sourcefiles>
+			</structure>
+
+			
+			<html destdir="${buildDir}/codecoveragehtml/" />
+			<csv destfile="${buildDir}/codecoverage.csv" />
+			<xml destfile="${buildDir}/codecoverage.xml" />
+		</jacoco:report>
 	</target>
 	
 </project>

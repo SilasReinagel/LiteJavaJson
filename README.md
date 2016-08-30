@@ -3,17 +3,19 @@
 [![Build Status](https://travis-ci.org/TheoConfidor/LiteJavaJson.svg?branch=master)](https://travis-ci.org/TheoConfidor/LiteJavaJson)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
-The purpose of this project is to provide a very simple, no-fluff, single source file Java JSON serializer and JSON deserializer.
+The purpose of this project is to provide a very simple, no-fluff, single source file Java JSON Serializer/Deserializer. 
 
-This project is designed to offer maximum value with minimal setup/configuration/learning. 
+This project is designed to offer maximum value with minimal setup/configuration/learning. It is designed to make Object mapping simple and painless.
+
+The code is written in a procedural Utility-class style. 
 
 ## Usage
 
 #### Add to Project
 
-This library contains two files: JsonSerializer.java and JsonDeserializer.java  
+This library contains a single source file: `Json.java`
 
-Copy-paste either or both directly into your project.
+Copy-paste this file directly into your project.
 
 #### Serialization
 
@@ -26,7 +28,7 @@ public class SimpleStringValueObject
 
 SimpleStringValueObject obj = new SimpleStringValueObject();
 obj.Value = "Important Data Here";
-String jsonString = JsonSerializer.toJsonString(obj); 
+String jsonString = Json.toJsonString(obj); 
 // jsonString: { "Value": "Important Data Here" }
 ```
 
@@ -39,16 +41,15 @@ public class SimpleStringValueObject
     public String Value;
 }
 
-SimpleStringValueObject obj = JsonDeserializer.toObj(
+SimpleStringValueObject obj = Json.toObj(
 	    SimpleStringValueObject.class, 
 	    "{ \"Value\": \"Important Data Here\" }");
 ```
 
 #### Deserialize Single Element Value (no Java object required)
 
-
 ```Java
-double price = JsonDeserializer.getElementValue(
+double price = Json.getElementValue(
         Double.class, 
         "Price", 
 		"{ \"Data1\": \"Something Useless\", \"Price\": 2.57 }");

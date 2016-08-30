@@ -12,25 +12,25 @@ public class JsonDeserializerTests
     @Test
     public void JsonDeserializer_InputNull_ThrowsException()
     {
-        ExceptionAssert.assertThrows(RuntimeException.class, () -> JsonDeserializer.toObj(SimpleStringValueObject.class, null));
+        ExceptionAssert.assertThrows(RuntimeException.class, () -> Json.toObj(SimpleStringValueObject.class, null));
     }
 
     @Test
     public void JsonDeserializer_InputContainsNoElements_ThrowsException()
     {
-        ExceptionAssert.assertThrows(RuntimeException.class, () -> JsonDeserializer.toObj(SimpleStringValueObject.class, "{ }"));
+        ExceptionAssert.assertThrows(RuntimeException.class, () -> Json.toObj(SimpleStringValueObject.class, "{ }"));
     }
 
     @Test
     public void JsonDeserializer_InputContainsNoElementsMatchingObject_ThrowsException()
     {
-        ExceptionAssert.assertThrows(RuntimeException.class, () -> JsonDeserializer.toObj(SimpleStringValueObject.class, "{ \"abc\": 123 }"));
+        ExceptionAssert.assertThrows(RuntimeException.class, () -> Json.toObj(SimpleStringValueObject.class, "{ \"abc\": 123 }"));
     }
 
     @Test
     public void JsonDeserializer_GetElementValue_IsCorrect()
     {
-        double price = JsonDeserializer.getElementValue(Double.class, "Price",
+        double price = Json.getElementValue(Double.class, "Price",
                 "{ \"Data1\": \"Something Useless\", \"Price\": 2.57 }");
 
         Assert.assertEquals(2.57, price, 0.01);
@@ -39,7 +39,7 @@ public class JsonDeserializerTests
     @Test
     public void JsonDeserializer_GetElementRawValue_IsCorrect()
     {
-        String price = JsonDeserializer.getElementRawValue("Price",
+        String price = Json.getElementRawValue("Price",
                 "{ \"Data1\": \"Something Useless\", \"Price\": 2.57 }");
 
         Assert.assertEquals("2.57", price);
@@ -48,7 +48,7 @@ public class JsonDeserializerTests
     @Test
     public void JsonDeserializer_MappingToObjWithImmutableConstructor_IsCorrect()
     {
-        SimpleImmutableObject obj = JsonDeserializer.toObj(SimpleImmutableObject.class,
+        SimpleImmutableObject obj = Json.toObj(SimpleImmutableObject.class,
                 "{ \"Value\": \"FancyReflectionMagic\" }");
 
         Assert.assertEquals("FancyReflectionMagic", obj.Value);
@@ -57,7 +57,7 @@ public class JsonDeserializerTests
     @Test
     public void JsonDeserializer_MappingCaseSensitiveFields_NonMatchingFieldValueNotSet()
     {
-        GenericKeyValueObject obj = JsonDeserializer.toObj(GenericKeyValueObject.class,
+        GenericKeyValueObject obj = Json.toObj(GenericKeyValueObject.class,
                 "{ \"Key\": \"Gunblade\", \"ExtraValue\": 12345 }");
 
         Assert.assertEquals("Gunblade", obj.Key);
@@ -67,7 +67,7 @@ public class JsonDeserializerTests
     @Test
     public void JsonDeserializer_MappingPrivateField_IsCorrect()
     {
-        SimplePrivateFieldClass obj = JsonDeserializer.toObj(SimplePrivateFieldClass.class,
+        SimplePrivateFieldClass obj = Json.toObj(SimplePrivateFieldClass.class,
                 "{ \"value\": \"SampleValue\" }");
 
         Assert.assertEquals("SampleValue", obj.getValue());
@@ -76,7 +76,7 @@ public class JsonDeserializerTests
     @Test
     public void JsonDeserializer_MappingParentClassField_IsCorrect()
     {
-        ChildClass obj = JsonDeserializer.toObj(ChildClass.class,
+        ChildClass obj = Json.toObj(ChildClass.class,
                 "{ \"ChildValue\": \"Kiddo\", \"ParentValue\": \"Pater Familias\" }");
 
         Assert.assertEquals("Kiddo", obj.ChildValue);
@@ -86,7 +86,7 @@ public class JsonDeserializerTests
     @Test
     public void JsonDeserializer_SingleValueBoolean_IsCorrect()
     {
-        boolean obj = JsonDeserializer.toObj(Boolean.class,
+        boolean obj = Json.toObj(Boolean.class,
                 "true");
 
         Assert.assertEquals(true, obj);
@@ -95,7 +95,7 @@ public class JsonDeserializerTests
     @Test
     public void JsonDeserializer_SingleValueDouble_IsCorrect()
     {
-        double obj = JsonDeserializer.toObj(Double.class,
+        double obj = Json.toObj(Double.class,
                 "78.87");
 
         Assert.assertEquals(78.87, obj, 0.01);
@@ -104,7 +104,7 @@ public class JsonDeserializerTests
     @Test
     public void JsonDeserializer_SingleValueString_IsCorrect()
     {
-        String obj = JsonDeserializer.toObj(String.class,
+        String obj = Json.toObj(String.class,
                 "\"John Doe\"");
 
         Assert.assertEquals("John Doe", obj);
@@ -113,7 +113,7 @@ public class JsonDeserializerTests
     @Test
     public void JsonDeserializer_SingleValueArrayToJavaArray_IsCorrect()
     {
-        int[] obj = JsonDeserializer.toObj(int[].class,
+        int[] obj = Json.toObj(int[].class,
                 "[ 9, 8, 7, 6, 5 ]");
 
         Assert.assertArrayEquals(new int[]{9, 8, 7, 6, 5}, obj);
@@ -122,7 +122,7 @@ public class JsonDeserializerTests
     @Test
     public void JsonDeserializer_ToListOfStrings_IsCorrect()
     {
-        List<String> obj = JsonDeserializer.toList(String.class,
+        List<String> obj = Json.toList(String.class,
             "[ \"Stratovarius\", \"Blind Guardian\" ]");
 
         Assert.assertEquals(2, obj.size());
@@ -133,7 +133,7 @@ public class JsonDeserializerTests
     @Test
     public void JsonDeserializer_DataBoolean_IsCorrect()
     {
-        SimpleBooleanValueObject obj = JsonDeserializer.toObj(SimpleBooleanValueObject.class,
+        SimpleBooleanValueObject obj = Json.toObj(SimpleBooleanValueObject.class,
                 "{ \"Value1\": true, \"Value2\": true }");
 
         Assert.assertEquals(true, obj.Value1);
@@ -143,7 +143,7 @@ public class JsonDeserializerTests
     @Test
     public void JsonDeserializer_DataString_IsCorrect()
     {
-        SimpleStringValueObject obj = JsonDeserializer.toObj(SimpleStringValueObject.class,
+        SimpleStringValueObject obj = Json.toObj(SimpleStringValueObject.class,
                 "{ \"Value\": \"SampleName\" }");
 
         Assert.assertEquals("SampleName", obj.Value);
@@ -152,7 +152,7 @@ public class JsonDeserializerTests
     @Test
     public void JsonDeserializer_DataInteger_IsCorrect()
     {
-        SimpleIntegerValueObject obj = JsonDeserializer.toObj(SimpleIntegerValueObject.class,
+        SimpleIntegerValueObject obj = Json.toObj(SimpleIntegerValueObject.class,
                 "{ \"Value1\": 79, \"Value2\": 12 }");
 
         Assert.assertEquals(79, obj.Value1);
@@ -162,7 +162,7 @@ public class JsonDeserializerTests
     @Test
     public void JsonDeserializer_DataFloat_IsCorrect()
     {
-        SimpleFloatValueObject obj = JsonDeserializer.toObj(SimpleFloatValueObject.class,
+        SimpleFloatValueObject obj = Json.toObj(SimpleFloatValueObject.class,
                 "{ \"Value1\": 1.23, \"Value2\": 4.12345 }");
 
         Assert.assertEquals(1.23, obj.Value1, 0.01);
@@ -172,7 +172,7 @@ public class JsonDeserializerTests
     @Test
     public void JsonDeserializer_DataDouble_IsCorrect()
     {
-        SimpleDoubleValueObject obj = JsonDeserializer.toObj(SimpleDoubleValueObject.class,
+        SimpleDoubleValueObject obj = Json.toObj(SimpleDoubleValueObject.class,
                 "{ \"Value1\": 1.23, \"Value2\": 4.12345 }");
 
         Assert.assertEquals(1.23, obj.Value1, 0.01);
@@ -182,7 +182,7 @@ public class JsonDeserializerTests
     @Test
     public void JsonDeserializer_DataLocalDateTime_IsCorrect()
     {
-        SimpleLocalDateTimeValueObject obj = JsonDeserializer.toObj(SimpleLocalDateTimeValueObject.class,
+        SimpleLocalDateTimeValueObject obj = Json.toObj(SimpleLocalDateTimeValueObject.class,
                 "{ \"Value\": \"2016-07-18T02:00\" }");
 
         Assert.assertEquals(LocalDateTime.of(2016, 7, 18, 2, 0), obj.Value);
@@ -191,7 +191,7 @@ public class JsonDeserializerTests
     @Test
     public void JsonDeserializer_DataInnerJavaObject_SubObjectValuesCorrect()
     {
-        SimpleSubObjectValueObject obj = JsonDeserializer.toObj(SimpleSubObjectValueObject.class,
+        SimpleSubObjectValueObject obj = Json.toObj(SimpleSubObjectValueObject.class,
                 "{ \"Value\": { \"Value1\": 1, \"Value2\": 3 } }");
 
         Assert.assertEquals(1, obj.Value.Value1);
@@ -201,7 +201,7 @@ public class JsonDeserializerTests
     @Test
     public void JsonDeserializer_DataEnum_IsCorrect()
     {
-        SimpleEnumValueObject obj = JsonDeserializer.toObj(SimpleEnumValueObject.class,
+        SimpleEnumValueObject obj = Json.toObj(SimpleEnumValueObject.class,
                 "{ \"Value\": \"Value2\" }");
 
         Assert.assertEquals(SampleEnum.Value2, obj.Value);
@@ -210,7 +210,7 @@ public class JsonDeserializerTests
     @Test
     public void JsonDeserializer_DataGeneric_IsCorrect()
     {
-        GenericKeyValueObject obj = JsonDeserializer.toObj(GenericKeyValueObject.class,
+        GenericKeyValueObject obj = Json.toObj(GenericKeyValueObject.class,
                 "{ \"Key\": \"Sora's Keyblade\", \"Value\": \"Is Equipped\" }");
 
         Assert.assertEquals("Sora's Keyblade", obj.Key);
@@ -220,7 +220,7 @@ public class JsonDeserializerTests
     @Test
     public void JsonDeserializer_DataEmptyList_IsCorrect()
     {
-        SimpleStringListValueObject obj = JsonDeserializer.toObj(SimpleStringListValueObject.class,
+        SimpleStringListValueObject obj = Json.toObj(SimpleStringListValueObject.class,
                 "{ \"Value\": [] }");
 
         Assert.assertEquals(0, obj.Value.size());
@@ -229,7 +229,7 @@ public class JsonDeserializerTests
     @Test
     public void JsonDeserializer_DataListOfStrings_IsCorrect()
     {
-        SimpleStringListValueObject obj = JsonDeserializer.toObj(SimpleStringListValueObject.class,
+        SimpleStringListValueObject obj = Json.toObj(SimpleStringListValueObject.class,
                 "{ \"Value\": [ \"JC Denton\", \"Adam Jensen\" ] }");
 
         Assert.assertEquals(2, obj.Value.size());
@@ -240,7 +240,7 @@ public class JsonDeserializerTests
     @Test
     public void JsonDeserializer_DataNestedListOfIntegers_IsCorrect()
     {
-        NestedListObject obj = JsonDeserializer.toObj(NestedListObject.class,
+        NestedListObject obj = Json.toObj(NestedListObject.class,
                 "{ \"Value\": [ [ [ [ 9, 8, 7 ] ] ] ] }");
 
         Assert.assertEquals(3, obj.getInnerValues().size());
@@ -250,7 +250,7 @@ public class JsonDeserializerTests
     @Test
     public void JsonDeserializer_DataListOfCustomObject_IsCorrect()
     {
-        CustomObjListValueObject obj = JsonDeserializer.toObj(CustomObjListValueObject.class,
+        CustomObjListValueObject obj = Json.toObj(CustomObjListValueObject.class,
                 "{ \"Value\": [ " +
                         "{ \"intValue\": \"79\", \"longValue\": \"412345678\", \"floatValue\": \"20.16\", \"dblValue\": \"12.23\" }, " +
                         "{ \"intValue\": \"123\", \"longValue\": \"412345678\", \"floatValue\": \"20.18\", \"dblValue\": \"7.23\" } ] }");
@@ -262,7 +262,7 @@ public class JsonDeserializerTests
     @Test
     public void JsonDeserializer_DataEmptyMap_IsCorrect()
     {
-        SimpleStringMapValueObject obj = JsonDeserializer.toObj(SimpleStringMapValueObject.class,
+        SimpleStringMapValueObject obj = Json.toObj(SimpleStringMapValueObject.class,
                 "{ \"Value\": [ ] }");
 
         Assert.assertEquals(0, obj.Value.size());
@@ -271,7 +271,7 @@ public class JsonDeserializerTests
     @Test
     public void JsonDeserializer_DataMapString_IsCorrect()
     {
-        SimpleStringMapValueObject obj = JsonDeserializer.toObj(SimpleStringMapValueObject.class,
+        SimpleStringMapValueObject obj = Json.toObj(SimpleStringMapValueObject.class,
                 "{ \"Value\": [ { \"Hello\": \"World\" } ] }");
 
         Assert.assertEquals(1, obj.Value.size());
@@ -281,7 +281,7 @@ public class JsonDeserializerTests
     @Test
     public void JsonDeserializer_DataMapStringBase64ByteArray_IsCorrect()
     {
-        StringByteArrayMapValueObject obj = JsonDeserializer.toObj(StringByteArrayMapValueObject.class,
+        StringByteArrayMapValueObject obj = Json.toObj(StringByteArrayMapValueObject.class,
                 "{ \"Value\": [ { \"1\": \"AQID\" } ] }");
 
         Assert.assertEquals(1, obj.Value.size());
@@ -292,7 +292,7 @@ public class JsonDeserializerTests
     // This is an enhancement on the Json spec. It allows for more flexible output objects.
     public void JsonDeserializer_StringWrappedNumbers_DeserializedIntoNumericFields()
     {
-        NumericTypesObject obj = JsonDeserializer.toObj(NumericTypesObject.class,
+        NumericTypesObject obj = Json.toObj(NumericTypesObject.class,
                 "{ \"intValue\": \"79\", \"longValue\": \"412345678\", \"floatValue\": \"20.16\", \"dblValue\": \"12.23\" }");
 
         Assert.assertEquals(79, obj.intValue);
@@ -305,7 +305,7 @@ public class JsonDeserializerTests
     // This is an enhancement on the Json spec. It allows for more flexible output objects.
     public void JsonDeserializer_NonWrappedString_CanBeDeserializedToString()
     {
-        SimpleStringValueObject obj = JsonDeserializer.toObj(SimpleStringValueObject.class,
+        SimpleStringValueObject obj = Json.toObj(SimpleStringValueObject.class,
                 "{ \"Value\": SampleName }");
 
         Assert.assertEquals("SampleName", obj.Value);
@@ -314,7 +314,7 @@ public class JsonDeserializerTests
     @Test
     public void JsonDeserializer_ArrayEmpty_IsCorrect()
     {
-        SimpleStringArrayValueObject obj = JsonDeserializer.toObj(SimpleStringArrayValueObject.class,
+        SimpleStringArrayValueObject obj = Json.toObj(SimpleStringArrayValueObject.class,
                 "{ \"Value\": [] }");
 
         Assert.assertEquals(0, obj.Value.length);
@@ -323,7 +323,7 @@ public class JsonDeserializerTests
     @Test
     public void JsonDeserializer_ArrayString_IsCorrect()
     {
-        SimpleStringArrayValueObject obj = JsonDeserializer.toObj(SimpleStringArrayValueObject.class,
+        SimpleStringArrayValueObject obj = Json.toObj(SimpleStringArrayValueObject.class,
                 "{ \"Value\": [ \"Obi Wan Kenobi\", \"Yoda\" ] }");
 
         Assert.assertEquals(2, obj.Value.length);
@@ -334,7 +334,7 @@ public class JsonDeserializerTests
     @Test
     public void JsonDeserializer_ArrayInt_IsCorrect()
     {
-        IntegerArrayValueObject obj = JsonDeserializer.toObj(IntegerArrayValueObject.class,
+        IntegerArrayValueObject obj = Json.toObj(IntegerArrayValueObject.class,
                 "{ \"Value1\": [ 3, 1, 4, 2, 5 ], \"Value2\": [ 1, 2, 3 ] }");
 
         Assert.assertArrayEquals(new int[] { 3, 1, 4, 2, 5 }, obj.Value1);
@@ -344,7 +344,7 @@ public class JsonDeserializerTests
     @Test
     public void JsonDeserializer_ArrayByte_IsCorrect()
     {
-        SimpleByteArrayValueObject obj = JsonDeserializer.toObj(SimpleByteArrayValueObject.class,
+        SimpleByteArrayValueObject obj = Json.toObj(SimpleByteArrayValueObject.class,
                 "{ \"Value\": [ 0, -128, 127, 5 ] }");
 
         Assert.assertArrayEquals(new byte[] { 0, -128, 127, 5}, obj.Value);
@@ -353,7 +353,7 @@ public class JsonDeserializerTests
     @Test
     public void JsonDeserializer_ArrayBase64StringEncodedBytes_IsCorrect()
     {
-        SimpleByteArrayValueObject obj = JsonDeserializer.toObj(SimpleByteArrayValueObject.class,
+        SimpleByteArrayValueObject obj = Json.toObj(SimpleByteArrayValueObject.class,
                 "{ \"Value\": \"AQID\" }");
 
         Assert.assertArrayEquals(new byte[] { 1, 2, 3 }, obj.Value);
@@ -362,7 +362,7 @@ public class JsonDeserializerTests
     @Test
     public void JsonDeserializer_ArrayDouble_IsCorrect()
     {
-        SimpleDoubleArrayValueObject obj = JsonDeserializer.toObj(SimpleDoubleArrayValueObject.class,
+        SimpleDoubleArrayValueObject obj = Json.toObj(SimpleDoubleArrayValueObject.class,
                 "{ \"Value\": [ 5.4321, 6.789 ] }");
 
         Assert.assertArrayEquals(new double[] { 5.4321, 6.789 }, obj.Value, 0.01);
@@ -371,7 +371,7 @@ public class JsonDeserializerTests
     @Test
     public void JsonDeserializer_ArrayLong_IsCorrect()
     {
-        SimpleLongArrayValueObject obj = JsonDeserializer.toObj(SimpleLongArrayValueObject.class,
+        SimpleLongArrayValueObject obj = Json.toObj(SimpleLongArrayValueObject.class,
                 "{ \"Value\": [ 123451234512345, 234562345623456 ] }");
 
         Assert.assertArrayEquals(new long[] { 123451234512345L, 234562345623456L }, obj.Value);
@@ -382,7 +382,7 @@ public class JsonDeserializerTests
     {
         String json = "{ \"Value\": [ \"JC Denton\", \"Adam Jensen\", \"Paul Denton\", \"David Sarif\" ] }";
 
-        double opsPerSecond = PerformanceTester.getOpsPerSecond(2000, 500, () -> JsonDeserializer.toObj(SimpleStringListValueObject.class, json));
+        double opsPerSecond = PerformanceTester.getOpsPerSecond(2000, 500, () -> Json.toObj(SimpleStringListValueObject.class, json));
 
         System.out.println("Deserialize Simple POJO: " + (long)opsPerSecond + " ops/s");
         Assert.assertTrue(opsPerSecond > 10000);
