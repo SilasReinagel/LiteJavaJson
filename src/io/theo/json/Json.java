@@ -251,9 +251,9 @@ public final class Json
             return isWrappedWith("\"", "\"", input);
         }
 
-        private static boolean isNullLiteral(String stringValue)
+        private static boolean isNullLiteral(final String input)
         {
-            return stringValue.equals("null");
+            return "null".equals(input);
         }
 
         private static String getCanonicalName(final Class type)
