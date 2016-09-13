@@ -131,6 +131,15 @@ public class JsonDeserializerTests
     }
 
     @Test
+    public void JsonDeserializer_DataNullLiteral_IsNull()
+    {
+        SimpleStringValueObject obj = Json.toObj(SimpleStringValueObject.class,
+                "{ \"Value\": null }");
+
+        Assert.assertNull(obj.Value);
+    }
+
+    @Test
     public void JsonDeserializer_DataBoolean_IsCorrect()
     {
         SimpleBooleanValueObject obj = Json.toObj(SimpleBooleanValueObject.class,

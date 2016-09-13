@@ -215,6 +215,8 @@ public final class Json
 
         private static Object getObjectValue(final Class type, final String stringValue)
         {
+            if (isNullLiteral(stringValue))
+                return null;
             String unwrapped = getUnwrappedString(stringValue);
             if (type.isEnum())
                 return Enum.valueOf(type, unwrapped);
@@ -247,6 +249,11 @@ public final class Json
         private static boolean isJsonString(final String input)
         {
             return isWrappedWith("\"", "\"", input);
+        }
+
+        private static boolean isNullLiteral(String stringValue)
+        {
+            return stringValue.equals("null");
         }
 
         private static String getCanonicalName(final Class type)
